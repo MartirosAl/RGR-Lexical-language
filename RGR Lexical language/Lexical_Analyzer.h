@@ -9,7 +9,7 @@
 #include <set>
 using namespace std;
 
-class Lexical_Analyzer
+class TableToken
 {
    enum SymbolicTokenType
    {
@@ -18,10 +18,14 @@ class Lexical_Analyzer
       DIGIT,
       ARITHMETIC_OPERATION,
       RELATION,
+      EQUAL,
       SPACE,
       LF,
       SEMI_COLON,
       ERROR,
+      O_BRACE,
+      C_BRACE,
+      END,
       END_MARKER
    };
 
@@ -32,13 +36,24 @@ class Lexical_Analyzer
       DECLARING_VARIABLES,
       ASSIGNMENT_OPERATOR,
       WHILE,
+      DO,
+      OD,
       FOR,
+      FROM,
+      TO,
+      BY,
       IF,
+      ELSE,
+      FI,
+      SELECT,
+      IN,
+      CASE,
+      OTHERWISE,
+      NI,
       INPUT,
       PRINT,
       MARK,
       GO_TO_MARK,
-      IF_GO_TO_MARK,
       RAISE,
       COMMENT,
       ERROR,
@@ -66,18 +81,29 @@ class Lexical_Analyzer
       "DECLARING_VARIABLES",
       "ASSIGNMENT_OPERATOR",
       "WHILE",
+      "DO",
+      "OD",
       "FOR",
+      "FROM",
+      "TO",
+      "BY",
       "IF",
+      "ELSE",
+      "FI",
+      "SELECT",
+      "IN",
+      "CASE",
+      "OTHERWISE",
+      "NI",
       "INPUT",
       "PRINT",
       "MARK",
       "GO_TO_MARK",
-      "IF_GO_TO_MARK",
       "RAISE",
       "COMMENT",
       "ERROR",
       "ARITHMETIC_OPERATION",
-      "RELATION",
+      "RELATION"
    };
 
    enum Relation
@@ -102,6 +128,18 @@ class Lexical_Analyzer
       "More_or_equal_then"
    };
 
+   enum VariableType
+   {
+      Int,
+      Big_Number
+   };
+
+   vector<string> VariableTypeString
+   {
+      "int",
+      "BigNumber"
+   };
+
    struct SymbolicToken
    {
       SymbolicTokenType token_class = start;
@@ -111,29 +149,24 @@ class Lexical_Analyzer
    struct Token
    {
       TokenType token_class = (TokenType)start;
-      //get<0> - это int значение для транслитератора, отношений и ариф. операций
+      //get<0> - это int значение для отношений и ариф. операций
       //get<1> - это ячейка для таблицы констант
       //get<2> - это ячейка дтя таблицы переменных
       variant<int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> value = 0;
       int number_line = 0;
    };
 
-   //0 - начало словосочитания
-   //1 - продолжение словосочитания
-   //2 - конец словосочитания
-   //3 - возможный вариант
-   //4 - одиночное слово
-   map<string, int> table_detection
+   //Одинаковые элементы удалятся
+   map<string, TokenType> table_detection
    {
-      {"declare", 0}, {"as", 1},
-      {"while", 0}, {"do", 1}, {"od", 2},
-      {"for", 0}, {"from", 1}, {"to", 1}, {"by",3}, {"do", 1}, {"od",2},
-      {"if", 1}, {"else", 3}, {"fi", 2},
-      {"input", 4},
-      {"print", 4},
-      {"goto", 4},
-      {"select", 0}, {"in", 1}, {"case", 1}, {"otherwise", 3}, {"ni",2},
-      {"raise", 4}
+      {"while", WHILE}, {"do", DO}, {"od", OD},
+      {"for", FOR}, {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
+      {"if", IF}, {"else", ELSE}, {"fi", FI},
+      {"input", INPUT},
+      {"print", PRINT},
+      {"goto", GO_TO_MARK},
+      {"select", SELECT}, {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
+      {"raise", RAISE}
    };
 
    //ТАБЛИЦЫ//
@@ -150,63 +183,6 @@ class Lexical_Analyzer
 
    //Таблицы для обнаружения ключевых слов
    const map<string, int> table_detection;
-
-   SymbolicToken Transliterator(int character)
-   {
-      SymbolicToken result;
-      result.value = 0;
-      if (character >= 'A' && character <= 'Z' || character >= 'a' && character <= 'z')
-      {
-         result.token_class = SymbolicTokenType::LETTER;
-         result.value = (int)character;
-      }
-      else if (character >= '0' && character <= '9')
-      {
-         result.token_class = SymbolicTokenType::DIGIT;
-         result.value = (int)character - '0';
-      }
-      else if (character == '+' || character == '-' || character == '*' || character == '/' || character == '%')
-      {
-         result.token_class = SymbolicTokenType::ARITHMETIC_OPERATION;
-         result.value = (int)character;
-      }
-      else if (character == '<')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = Less_then;
-      }
-      else if (character == '>')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = More_then;
-      }
-      else if (character == '=')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = Equal;
-      }
-      else if (character == '!')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = Not;
-      }
-      else if (character == ' ' || character == '\t')
-      {
-         result.token_class = SymbolicTokenType::SPACE;
-         result.value = (int)character;
-      }
-      else if (character == ';')
-      {
-         result.token_class = SymbolicTokenType::SEMI_COLON;
-         result.value = (int)character;
-      }
-      else
-      {
-         result.token_class = SymbolicTokenType::ERROR;
-         result.value = (int)character;
-      }
-      return result;
-   }
 
    bool Is_Keyword(string word)
    {
@@ -258,14 +234,58 @@ class Lexical_Analyzer
    }
 
    //Процедура СОЗДАТЬ_ЛЕКСЕМУ
-   void Create_Token()
+   void Create_Token(ifstream& in)
    {
       Token result;
-
       if (register_type_token == TokenType::RELATION)
          result.value = register_relation;
       else if (register_type_token == TokenType::ARITHMETIC_OPERATION)
          result.value = register_value;
+      else if (register_type_token == TokenType::DECLARING_VARIABLES)
+      {
+         int flag = true;
+         string name_variable;
+         string word;
+         while (flag)
+         {
+            name_variable = V(in);
+            cin >> word;
+
+            if (word != "as")
+               Error_Handle(in); //Ошибка операции
+
+            in >> word;
+
+            if (word[word.size() - 1] == ';')
+            {
+               word.resize(word.size() - 1);
+               flag = false;
+            }
+            else if (word[word.size() - 1] == ',')
+               word.resize(word.size() - 1);
+            else
+            {
+               Error_Handle(in); //Ошибка операции объявления
+            }
+
+
+            if (word == VariableTypeString[0])
+            {
+               table_variable[name_variable] = (int)0;
+            }
+            else if (word == VariableTypeString[1])
+            {
+               table_variable[name_variable] = (BigNumber)0;
+            }
+            else
+               Error_Handle(); //Ошибка типа переменной
+
+            result.value = table_variable.find(register_variable);
+
+            table_tokens.push_back(result);
+         }
+         return;
+      }
       else if (register_indicator.index() == 1)
       {
          result.value = get<1>(register_indicator);
@@ -285,12 +305,21 @@ class Lexical_Analyzer
    }
 
    //Процедура обработки ошибок
-   void Error_Handler()
+   void Error_Handler(ifstream& in)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token();
+      Create_Token(in);
       cerr << "An error was found in the number line " << number_line << endl;
    }
+
+   void Error_Handler(char variable, ifstream& in)
+   {
+      register_type_token = TokenType::ERROR;
+      Create_Token(in);
+      cerr << "An error was found in the number line " << number_line << "; Wrong variable name with symbol" << variable << endl;
+   }
+
+
 
    //ПЕРЕМЕННЫЕ//
 
@@ -320,4 +349,108 @@ class Lexical_Analyzer
    Token token;
 
    SymbolicToken symbolic_token;
+
+   string V(ifstream& in)
+   {
+      string word;
+      in >> word;
+      for (int i = 0; i < word.size(); i++)
+      {
+         if (!((word[i] >= '0' && word[i] <= '9') || (word[i] >= 'a' && word[i] <= 'z') || (word[i] >= 'A' && word[i] <= 'Z')))
+         {
+            Error_Handler(word[i], in);
+         }
+      }
+      return word;
+   }
+
+   SymbolicToken Transliterator(int character)
+   {
+      SymbolicToken result;
+      result.value = 0;
+      if (character >= 'A' && character <= 'Z' || character >= 'a' && character <= 'z')
+      {
+         result.token_class = SymbolicTokenType::LETTER;
+         result.value = (int)character;
+      }
+      else if (character >= '0' && character <= '9')
+      {
+         result.token_class = SymbolicTokenType::DIGIT;
+         result.value = (int)character - '0';
+      }
+      else if (character == '+' || character == '-' || character == '*' || character == '/' || character == '%')
+      {
+         result.token_class = SymbolicTokenType::ARITHMETIC_OPERATION;
+         result.value = (int)character;
+      }
+      else if (character == '<')
+      {
+         result.token_class = SymbolicTokenType::RELATION;
+         result.value = Less_then;
+      }
+      else if (character == '>')
+      {
+         result.token_class = SymbolicTokenType::RELATION;
+         result.value = More_then;
+      }
+      else if (character == '=')
+      {
+         result.token_class = SymbolicTokenType::EQUAL;
+         result.value = Equal;
+      }
+      else if (character == '!')
+      {
+         result.token_class = SymbolicTokenType::RELATION;
+         result.value = Not;
+      }
+      else if (character == ' ' || character == '\t')
+      {
+         result.token_class = SymbolicTokenType::SPACE;
+         result.value = (int)character;
+      }
+      else if (character == ';')
+      {
+         result.token_class = SymbolicTokenType::SEMI_COLON;
+         result.value = (int)character;
+      }
+      else if (character == '\n')
+      {
+         result.token_class = SymbolicTokenType::LF;
+         result.value = (int)character;
+      }
+      else if (character == EOF)
+      {
+         result.token_class = SymbolicTokenType::END;
+         result.value = (int)character;
+      }
+      else
+      {
+         result.token_class = SymbolicTokenType::ERROR;
+         result.value = (int)character;
+      }
+      return result;
+   }
+
+   vector<Token> Lexical_Analyzer(const char* filename)
+   {
+      ifstream in(filename);
+      if (!in)
+      {
+         cout << "Не удалось открыть файл " << filename << endl;
+         return table_tokens;
+      }
+
+      string word;
+
+      bool flag = true;
+      while (true)
+      {
+         int character = in.get();
+         symbolic_token = Transliterator(character);
+
+         
+         
+      }
+      
+   }
 };
