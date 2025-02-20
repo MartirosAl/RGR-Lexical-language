@@ -2,6 +2,7 @@
 
 #pragma once
 #include <iostream>
+#include <vector>
 #include "Iterator.h"
 
 using namespace std;
@@ -19,6 +20,8 @@ public:
    BigNumber(const size_t new_cap_ = 100);
 
    BigNumber(const short* number_, const size_t size_);
+
+   BigNumber(const vector<short> number_, const size_t size_);
 
    ~BigNumber();
 

@@ -18,13 +18,13 @@ class TableToken
       DIGIT,
       ARITHMETIC_OPERATION,
       RELATION,
-      EQUAL,
       SPACE,
       LF,
       SEMI_COLON,
       ERROR,
       O_BRACE,
       C_BRACE,
+      UNDERLINING,
       END,
       END_MARKER
    };
@@ -58,7 +58,16 @@ class TableToken
       COMMENT,
       ERROR,
       ARITHMETIC_OPERATION,
-      RELATION
+      RELATION,
+      VARIABLE_TYPE,
+      O_BRACE,
+      C_BRACE,
+      COMMA,
+      O_MARK,
+      C_MARK,
+      O_COMMENT,
+      C_COMMENT,
+      CASE_LISTING
    };
 
    vector<string> SymbolicTokenTypeString
@@ -70,8 +79,11 @@ class TableToken
       "SPACE",
       "LF",
       "SEMI_COLON",
-      "COMMENT",
       "ERROR",
+      "O_BRACE",
+      "C_BRACE",
+      "UNDERLINING",
+      "END",
       "END_MARKER"
    };   
    
@@ -103,41 +115,16 @@ class TableToken
       "COMMENT",
       "ERROR",
       "ARITHMETIC_OPERATION",
-      "RELATION"
-   };
-
-   enum Relation
-   {
-      Equal,
-      Not,
-      Less_then,
-      More_then,
-      Not_equal,
-      Less_or_equal_then,
-      More_or_equal_then
-   };
-
-   vector<string> RelationString
-   {
-      "Equal",
-      "Not",
-      "Less_then",
-      "More_then",
-      "Not_equal",
-      "Less_or_equal_then",
-      "More_or_equal_then"
-   };
-
-   enum VariableType
-   {
-      Int,
-      Big_Number
-   };
-
-   vector<string> VariableTypeString
-   {
-      "int",
-      "BigNumber"
+      "RELATION",
+      "VARIABLE_TYPE",
+      "O_BRACE",
+      "C_BRACE",
+      "COMMA",
+      "O_MARK",
+      "C_MARK",
+      "O_COMMENT",
+      "C_COMMENT",
+      "CASE_LISTING"
    };
 
    struct SymbolicToken
@@ -156,17 +143,9 @@ class TableToken
       int number_line = 0;
    };
 
-   //Одинаковые элементы удалятся
-   map<string, TokenType> table_detection
+   vector<SymbolicTokenType> types_for_names_variables
    {
-      {"while", WHILE}, {"do", DO}, {"od", OD},
-      {"for", FOR}, {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
-      {"if", IF}, {"else", ELSE}, {"fi", FI},
-      {"input", INPUT},
-      {"print", PRINT},
-      {"goto", GO_TO_MARK},
-      {"select", SELECT}, {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
-      {"raise", RAISE}
+      LETTER, DIGIT, UNDERLINING
    };
 
    //ТАБЛИЦЫ//
@@ -182,7 +161,30 @@ class TableToken
    vector<Token> table_tokens;
 
    //Таблицы для обнаружения ключевых слов
-   const map<string, int> table_detection;
+   //Одинаковые элементы удалятся
+   map<string, TokenType> table_detection
+   {
+      {"int", VARIABLE_TYPE}, {"BigNumber", VARIABLE_TYPE},
+      {"while", WHILE}, {"do", DO}, {"od", OD},
+      {"for", FOR}, {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
+      {"if", IF}, {"else", ELSE}, {"fi", FI},
+      {"input", INPUT},
+      {"print", PRINT},
+      {"goto", GO_TO_MARK},
+      {"select", SELECT}, {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
+      {"raise", RAISE}
+   };
+
+   map<string, TokenType> table_operations
+   {
+      {";", TokenType::EMPTY_OPERATOR},       {"=", TokenType::ASSIGNMENT_OPERATOR},  {",", TokenType::COMMA},
+      {"+", TokenType::ARITHMETIC_OPERATION}, {"-", TokenType::ARITHMETIC_OPERATION}, {"*", TokenType::ARITHMETIC_OPERATION},
+      {"/", TokenType::ARITHMETIC_OPERATION}, {"%", TokenType::ARITHMETIC_OPERATION}, {"(", TokenType::O_BRACE}, 
+      {")", TokenType::C_BRACE},              {"<", TokenType::RELATION},             {">", TokenType::RELATION}, 
+      {"==", TokenType::RELATION},            {"<=", TokenType::RELATION},            {">=", TokenType::RELATION},
+      {"!=", TokenType::RELATION},            {"<<", TokenType::O_MARK},              {">>", TokenType::C_MARK}, 
+      {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING}
+   };
 
    bool Is_Keyword(string word)
    {
@@ -191,105 +193,72 @@ class TableToken
 
 
    //Процедура ДОБАВИТЬ_КОНСТАНТУ
-   void Add_Constant()
+   void Add_Constant(int constant)
    {
-      if (register_number.index() == 0)
+      table_constants.emplace(constant);
+
+      register_value = constant;
+
+      register_indicator = table_constants.find(constant);
+   }
+
+   void Add_Constant(string a)
+   {
+      if (!Is_this_constant(a))
+         return Error_Handler_Constant(a);
+
+      if (S_more_I(a))
       {
-         table_constants.emplace(get<0>(register_number));
-
-         register_value = get<0>(register_number);
-
-         register_indicator = table_constants.find(get<0>(register_number));
-
-         get<0>(register_number) = -1;
+         Add_Constant(from_string_to_vector_short(a));
+         return;
       }
-      else
-      {
-         reverse(get<1>(register_number).begin(), get<1>(register_number).end());
-         BigNumber temp(get<1>(register_number).data(), get<1>(register_number).size());
-         table_constants.emplace(temp);
 
-         register_indicator = table_constants.find(temp);
+      int constant = stoi(a);
 
-         get<1>(register_number).clear();
-      }
+      table_constants.emplace(constant);
+
+      register_value = constant;
+
+      register_indicator = table_constants.find(constant);
+   }
+
+   void Add_Constant(vector<short> a)
+   {
+      BigNumber temp (reverseDigits(a), a.size());
+
+      table_constants.emplace(temp);
+
+      register_indicator = table_constants.find(temp);
    }
 
    //Процедура ДОБАВИТЬ_ПЕРЕМЕННУЮ
-   void Add_Variable()
+   void Add_Variable(string word)
    {
 
-      if (Is_Keyword(register_variable))
+      if (Is_this_variable(word))
       {
-         Error_Handler();
+         Error_Handler_Variable(word);
          return;
       }
 
-      if (table_variable.count(register_variable) == 0)
+      if (table_variable.count(word) == 0)
       {
-         table_variable[register_variable] = 0;
+         table_variable[word] = 0;
       }
 
-      register_indicator = table_variable.find(register_variable);
+      register_indicator = table_variable.find(word);
    }
 
    //Процедура СОЗДАТЬ_ЛЕКСЕМУ
-   void Create_Token(ifstream& in)
+   void Create_Token()
    {
       Token result;
-      if (register_type_token == TokenType::RELATION)
-         result.value = register_relation;
-      else if (register_type_token == TokenType::ARITHMETIC_OPERATION)
+
+      if (register_type_token >= 12 && register_type_token <= 38)
          result.value = register_value;
-      else if (register_type_token == TokenType::DECLARING_VARIABLES)
-      {
-         int flag = true;
-         string name_variable;
-         string word;
-         while (flag)
-         {
-            name_variable = V(in);
-            cin >> word;
-
-            if (word != "as")
-               Error_Handle(in); //Ошибка операции
-
-            in >> word;
-
-            if (word[word.size() - 1] == ';')
-            {
-               word.resize(word.size() - 1);
-               flag = false;
-            }
-            else if (word[word.size() - 1] == ',')
-               word.resize(word.size() - 1);
-            else
-            {
-               Error_Handle(in); //Ошибка операции объявления
-            }
-
-
-            if (word == VariableTypeString[0])
-            {
-               table_variable[name_variable] = (int)0;
-            }
-            else if (word == VariableTypeString[1])
-            {
-               table_variable[name_variable] = (BigNumber)0;
-            }
-            else
-               Error_Handle(); //Ошибка типа переменной
-
-            result.value = table_variable.find(register_variable);
-
-            table_tokens.push_back(result);
-         }
-         return;
-      }
       else if (register_indicator.index() == 1)
       {
          result.value = get<1>(register_indicator);
-
       }
       else if (register_indicator.index() == 0)
       {
@@ -308,17 +277,32 @@ class TableToken
    void Error_Handler(ifstream& in)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token(in);
+      Create_Token();
       cerr << "An error was found in the number line " << number_line << endl;
    }
 
-   void Error_Handler(char variable, ifstream& in)
+
+   void Error_Handler_Operation(string error)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token(in);
-      cerr << "An error was found in the number line " << number_line << "; Wrong variable name with symbol" << variable << endl;
+      Create_Token();
+      cerr << "An error was found in the number line " << number_line << "; Wrong operation " << error << endl;
    }
 
+   void Error_Handler_Variable(string error)
+   {
+      register_type_token = TokenType::ERROR;
+      Create_Token();
+      cerr << "An error was found in the number line " << number_line << "; Wrong variable " << error << endl;
+   }
+
+   void Error_Handler_Constant(string error)
+   {
+      register_type_token = TokenType::ERROR;
+      Create_Token();
+      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type int " << error << endl;;
+
+   }
 
 
    //ПЕРЕМЕННЫЕ//
@@ -337,9 +321,6 @@ class TableToken
    //Регистр отношения хранит информацию о первом символе отношения
    int register_relation = 0;
 
-   //Регистр переменной содержит имя переменной
-   string register_variable;
-
    //Регистр значения хранит значения лексем
    int register_value = -1;
 
@@ -350,19 +331,78 @@ class TableToken
 
    SymbolicToken symbolic_token;
 
-   string V(ifstream& in)
+   bool Is_in_variable(SymbolicTokenType a)
    {
-      string word;
-      in >> word;
-      for (int i = 0; i < word.size(); i++)
-      {
-         if (!((word[i] >= '0' && word[i] <= '9') || (word[i] >= 'a' && word[i] <= 'z') || (word[i] >= 'A' && word[i] <= 'Z')))
-         {
-            Error_Handler(word[i], in);
-         }
-      }
-      return word;
+      return (find(types_for_names_variables.begin(), types_for_names_variables.end(), a) != types_for_names_variables.end());
    }
+
+   bool Is_this_variable(string word)
+   {
+      if (!((word[0] >= 'a' && word[0] <= 'z') || (word[0] >= 'A' && word[0] <= 'Z')))
+         return false;
+      for (auto i : word)
+      {
+         if (!((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i == '_')))
+            return false;
+      }
+      return true;
+   }
+
+   bool Is_this_constant(string constant)
+   {
+      for (auto i : constant)
+      {
+         if (!(i >= '0' && i <= '9'))
+            return false;
+      }
+      return true;
+   }
+
+   bool Is_this_constant(vector<short> constant)
+   {
+      for (auto i : constant)
+      {
+         if (!(i >= '0' && i <= '9'))
+            return false;
+      }
+      return true;
+   }
+
+   vector<short> reverseDigits(vector<short> num)
+   {
+      vector<short> rev_num;
+      for (size_t i = num.size(); i > 0; i--)
+      {
+         rev_num.push_back(num[i - 1]);
+      }
+      return rev_num;
+   }
+
+   bool S_more_I(string a)
+   {
+      string b = "2147483647";
+      if (a.size() != b.size())
+      {
+         return (a.size() > b.size());
+      }
+      for (auto i : a)
+      {
+         if (a > b)
+            return a > b;
+      }
+      return false;
+   }
+
+   vector<short> from_string_to_vector_short(string a)
+   {
+      vector<short> b;
+      for (auto i : a)
+      {
+         b.push_back(i - '0');
+      }
+      return b;
+   }
+
 
    SymbolicToken Transliterator(int character)
    {
@@ -378,30 +418,20 @@ class TableToken
          result.token_class = SymbolicTokenType::DIGIT;
          result.value = (int)character - '0';
       }
+      else if (character == '_')
+      {
+         result.token_class = SymbolicTokenType::UNDERLINING;
+         result.value = (int)character;
+      }
       else if (character == '+' || character == '-' || character == '*' || character == '/' || character == '%')
       {
          result.token_class = SymbolicTokenType::ARITHMETIC_OPERATION;
          result.value = (int)character;
       }
-      else if (character == '<')
+      else if (character == '<' || character == '>' || character == '=' || character == '!')
       {
          result.token_class = SymbolicTokenType::RELATION;
-         result.value = Less_then;
-      }
-      else if (character == '>')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = More_then;
-      }
-      else if (character == '=')
-      {
-         result.token_class = SymbolicTokenType::EQUAL;
-         result.value = Equal;
-      }
-      else if (character == '!')
-      {
-         result.token_class = SymbolicTokenType::RELATION;
-         result.value = Not;
+         result.value = (int)character;
       }
       else if (character == ' ' || character == '\t')
       {
@@ -443,14 +473,54 @@ class TableToken
       string word;
 
       bool flag = true;
+
+      SymbolicTokenType prev_character;
+      prev_character = Transliterator(in.peek()).token_class;
+      string accumulation_of_value;
+      bool flag_big_number = false;
+
       while (true)
       {
          int character = in.get();
          symbolic_token = Transliterator(character);
 
-         
-         
+         if (prev_character == symbolic_token.token_class || (Is_in_variable(symbolic_token.token_class) && Is_in_variable(prev_character)))
+         {
+            accumulation_of_value += symbolic_token.value;
+         }
+         else
+         {
+            switch (prev_character)
+            {
+            case (SymbolicTokenType::LETTER):
+
+               if (table_detection.contains(accumulation_of_value))
+               {
+                  register_type_token = table_detection[accumulation_of_value];
+               }
+               else
+               {
+                  Add_Variable(accumulation_of_value);
+               }
+               break;
+
+            case (SymbolicTokenType::DIGIT):
+
+               Add_Constant(accumulation_of_value);
+               break;
+
+            default:
+
+               if (table_operations.count(accumulation_of_value))
+               {
+                  register_type_token = table_operations[accumulation_of_value];
+               }
+               else
+                  Error_Handler_Operation(accumulation_of_value);
+            }
+            
+            Create_Token();
+         }
       }
-      
    }
 };

@@ -30,6 +30,20 @@ BigNumber::BigNumber(const short* number_, const size_t size_)
       number[i] = number_[i];
 }
 
+BigNumber::BigNumber(const vector<short> number_, const size_t size_)
+{
+   //Выделяю память кратную 100 и больше size_
+   size_t i = 1;
+   for (i = 1; 100 * i < size_; i++);
+   capacity = 100 * i;
+   number = new short[capacity];
+
+   size = size_;
+
+   for (i = 0; i < size; i++)
+      number[i] = number_[i];
+}
+
 BigNumber::~BigNumber()
 {
    if (number)
