@@ -137,6 +137,9 @@
     <ClInclude Include="Iterator.h" />
     <ClInclude Include="Lexical_Analyzer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Test1.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

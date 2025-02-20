@@ -13,17 +13,17 @@ class TableToken
 {
    enum SymbolicTokenType
    {
-      start = -1,
+      start_S = -1,
       LETTER,
       DIGIT,
-      ARITHMETIC_OPERATION,
-      RELATION,
+      ARITHMETIC_OPERATION_S,
+      RELATION_S,
       SPACE,
       LF,
       SEMI_COLON,
-      ERROR,
-      O_BRACE,
-      C_BRACE,
+      ERROR_S,
+      O_BRACE_S,
+      C_BRACE_S,
       UNDERLINING,
       END,
       END_MARKER
@@ -32,7 +32,7 @@ class TableToken
    enum TokenType
    {
       start = -1,
-      EMPTY_OPERATOR = END_MARKER,
+      EMPTY_OPERATOR,
       DECLARING_VARIABLES,
       ASSIGNMENT_OPERATOR,
       WHILE,
@@ -57,9 +57,6 @@ class TableToken
       RAISE,
       COMMENT,
       ERROR,
-      ARITHMETIC_OPERATION,
-      RELATION,
-      VARIABLE_TYPE,
       O_BRACE,
       C_BRACE,
       COMMA,
@@ -67,7 +64,10 @@ class TableToken
       C_MARK,
       O_COMMENT,
       C_COMMENT,
-      CASE_LISTING
+      CASE_LISTING,
+      ARITHMETIC_OPERATION,
+      RELATION,
+      VARIABLE_TYPE,
    };
 
    vector<string> SymbolicTokenTypeString
@@ -114,9 +114,6 @@ class TableToken
       "RAISE",
       "COMMENT",
       "ERROR",
-      "ARITHMETIC_OPERATION",
-      "RELATION",
-      "VARIABLE_TYPE",
       "O_BRACE",
       "C_BRACE",
       "COMMA",
@@ -124,12 +121,15 @@ class TableToken
       "C_MARK",
       "O_COMMENT",
       "C_COMMENT",
-      "CASE_LISTING"
+      "CASE_LISTING",
+      "ARITHMETIC_OPERATION",
+      "RELATION",
+      "VARIABLE_TYPE"
    };
 
    struct SymbolicToken
    {
-      SymbolicTokenType token_class = start;
+      SymbolicTokenType token_class = start_S;
       int value = 0;
    };
 
@@ -425,12 +425,22 @@ class TableToken
       }
       else if (character == '+' || character == '-' || character == '*' || character == '/' || character == '%')
       {
-         result.token_class = SymbolicTokenType::ARITHMETIC_OPERATION;
+         result.token_class = SymbolicTokenType::ARITHMETIC_OPERATION_S;
          result.value = (int)character;
       }
       else if (character == '<' || character == '>' || character == '=' || character == '!')
       {
-         result.token_class = SymbolicTokenType::RELATION;
+         result.token_class = SymbolicTokenType::RELATION_S;
+         result.value = (int)character;
+      }
+      else if (character == '(')
+      {
+         result.token_class = SymbolicTokenType::O_BRACE_S;
+         result.value = (int)character;
+      }
+      else if (character == ')')
+      {
+         result.token_class = SymbolicTokenType::C_BRACE_S;
          result.value = (int)character;
       }
       else if (character == ' ' || character == '\t')
@@ -455,12 +465,13 @@ class TableToken
       }
       else
       {
-         result.token_class = SymbolicTokenType::ERROR;
+         result.token_class = SymbolicTokenType::ERROR_S;
          result.value = (int)character;
       }
       return result;
    }
 
+public:
    vector<Token> Lexical_Analyzer(const char* filename)
    {
       ifstream in(filename);
@@ -477,12 +488,12 @@ class TableToken
       SymbolicTokenType prev_character;
       prev_character = Transliterator(in.peek()).token_class;
       string accumulation_of_value;
-      bool flag_big_number = false;
 
-      while (true)
+      while (flag)
       {
          int character = in.get();
          symbolic_token = Transliterator(character);
+         
 
          if (prev_character == symbolic_token.token_class || (Is_in_variable(symbolic_token.token_class) && Is_in_variable(prev_character)))
          {
@@ -521,6 +532,41 @@ class TableToken
             
             Create_Token();
          }
+
+         if (symbolic_token.token_class == LF)
+            number_line++;
+         else if (symbolic_token.token_class == END)
+            flag = false;
+      }
+
+      return table_tokens;
+   }
+
+   void Print_Table_Token()
+   {
+      for (auto i : table_tokens)
+      {
+         cout << i.number_line << " ";
+         cout << TokenTypeString[i.token_class] << " ";
+         if (i.token_class >= 0 && i.token_class <= 32)
+            ;//Ничего не происходит
+         else if (i.value.index() == 0)
+            cout << get<0>(i.value);
+         else if (i.value.index() == 2)
+         {
+            if (get<2>(i.value)->second.index() == 0)
+               cout << get<2>(i.value)->first << " ";
+            else
+               cout << get<2>(i.value)->first << " ";
+         }
+         else if (i.value.index() == 1)
+         {
+            if (get<1>(i.value)->index() == 0)
+               cout << get<0>(*(get<1>(i.value))) << " ";
+            else
+               cout << get<1>(*(get<1>(i.value))) << " ";
+         }
+         cout << endl;
       }
    }
 };
