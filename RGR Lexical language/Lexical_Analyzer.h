@@ -63,7 +63,9 @@ vector<string> TokenTypeString
    "CASE_LISTING",
    "ARITHMETIC_OPERATION",
    "RELATION",
-   "VARIABLE_TYPE"
+   "VARIABLE_TYPE",
+   "VARIABLE",
+   "CONSTANT"
 };
 
 class TableToken
@@ -126,6 +128,8 @@ class TableToken
       ARITHMETIC_OPERATION,
       RELATION,
       VARIABLE_TYPE,
+      VARIABLE,
+      CONSTANT
    };
    struct SymbolicToken
    {
@@ -231,7 +235,7 @@ class TableToken
    void Add_Variable(string word)
    {
 
-      if (Is_this_variable(word))
+      if (!Is_this_variable(word))
       {
          Error_Handler_Variable(word);
          return;
@@ -250,7 +254,7 @@ class TableToken
    {
       Token result;
 
-      if (register_type_token >= 12 && register_type_token <= 35)
+      if (register_type_token >= 12 && register_type_token <= 37)
          result.value = value_;
       else if (register_indicator.index() == 1)
       {
@@ -431,7 +435,7 @@ class TableToken
       else if (character >= '0' && character <= '9')
       {
          result.token_class = SymbolicTokenType::DIGIT;
-         result.value = (int)character - '0';
+         result.value = (int)character;
       }
       else if (character == '_')
       {
@@ -530,6 +534,7 @@ public:
                {
                   //Проблема
                   Add_Variable(accumulation_of_value);
+                  register_type_token = TokenType::VARIABLE;
                }
                break;
 
@@ -537,6 +542,7 @@ public:
 
                //Проблема
                Add_Constant(accumulation_of_value);
+               register_type_token = TokenType::CONSTANT;
                break;
 
             default:
@@ -550,7 +556,7 @@ public:
             }
             
             Create_Token(accumulation_of_value);
-            accumulation_of_value = character;
+            accumulation_of_value = symbolic_token.value;
          }
 
          if (symbolic_token.token_class == LF)
@@ -560,7 +566,7 @@ public:
 
          prev_character = symbolic_token.token_class;
       }
-
+      
       return table_tokens;
    }
 
