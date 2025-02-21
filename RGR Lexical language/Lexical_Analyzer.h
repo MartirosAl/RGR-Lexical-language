@@ -209,7 +209,7 @@ class TableToken
       if (S_more_I(a))
       {
          if (!Is_this_constant(a))
-            Error_Handler_Constant_BN(a);
+            Add_Variable(a);
          else
             Add_Constant(from_string_to_vector_short(a));
          return;
@@ -217,7 +217,7 @@ class TableToken
 
       if (!Is_this_constant(a))
       {
-         Error_Handler_Constant(a);
+         Add_Variable(a);
          return;
       }
 
@@ -253,6 +253,7 @@ class TableToken
       }
 
       register_indicator = table_variable.find(word);
+      register_type_token = TokenType::VARIABLE;
    }
 
    //Ïğîöåäóğà ÑÎÇÄÀÒÜ_ËÅÊÑÅÌÓ
@@ -297,6 +298,7 @@ class TableToken
       register_type_token = TokenType::ERROR;
 
       cerr << "An error was found in the number line " << number_line << "; Wrong variable \"" << error << "\"" << endl;
+      cerr << "A variable cannot start with a digit." << endl;
    }
 
    void Error_Handler_Constant(string error)
