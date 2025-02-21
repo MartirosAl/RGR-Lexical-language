@@ -9,8 +9,66 @@
 #include <set>
 using namespace std;
 
+vector<string> SymbolicTokenTypeString
+{
+   "LETTER",
+   "DIGIT",
+   "ARITHMETIC_OPERATION",
+   "RELATION",
+   "SPACE",
+   "LF",
+   "SEMI_COLON",
+   "ERROR",
+   "O_BRACE",
+   "C_BRACE",
+   "UNDERLINING",
+   "END",
+   "END_MARKER"
+};
+
+vector<string> TokenTypeString
+{
+   "EMPTY_OPERATOR",
+   "DECLARING_VARIABLES",
+   "ASSIGNMENT_OPERATOR",
+   "WHILE",
+   "DO",
+   "OD",
+   "FOR",
+   "FROM",
+   "TO",
+   "BY",
+   "IF",
+   "ELSE",
+   "FI",
+   "SELECT",
+   "IN",
+   "CASE",
+   "OTHERWISE",
+   "NI",
+   "INPUT",
+   "PRINT",
+   "MARK",
+   "GO_TO_MARK",
+   "RAISE",
+   "COMMENT",
+   "ERROR",
+   "O_BRACE",
+   "C_BRACE",
+   "COMMA",
+   "O_MARK",
+   "C_MARK",
+   "O_COMMENT",
+   "C_COMMENT",
+   "CASE_LISTING",
+   "ARITHMETIC_OPERATION",
+   "RELATION",
+   "VARIABLE_TYPE"
+};
+
 class TableToken
 {
+
    enum SymbolicTokenType
    {
       start_S = -1,
@@ -69,64 +127,6 @@ class TableToken
       RELATION,
       VARIABLE_TYPE,
    };
-
-   vector<string> SymbolicTokenTypeString
-   {
-      "LETTER",
-      "DIGIT",
-      "ARITHMETIC_OPERATION",
-      "RELATION",
-      "SPACE",
-      "LF",
-      "SEMI_COLON",
-      "ERROR",
-      "O_BRACE",
-      "C_BRACE",
-      "UNDERLINING",
-      "END",
-      "END_MARKER"
-   };   
-   
-   vector<string> TokenTypeString
-   {
-      "EMPTY_OPERATOR",
-      "DECLARING_VARIABLES",
-      "ASSIGNMENT_OPERATOR",
-      "WHILE",
-      "DO",
-      "OD",
-      "FOR",
-      "FROM",
-      "TO",
-      "BY",
-      "IF",
-      "ELSE",
-      "FI",
-      "SELECT",
-      "IN",
-      "CASE",
-      "OTHERWISE",
-      "NI",
-      "INPUT",
-      "PRINT",
-      "MARK",
-      "GO_TO_MARK",
-      "RAISE",
-      "COMMENT",
-      "ERROR",
-      "O_BRACE",
-      "C_BRACE",
-      "COMMA",
-      "O_MARK",
-      "C_MARK",
-      "O_COMMENT",
-      "C_COMMENT",
-      "CASE_LISTING",
-      "ARITHMETIC_OPERATION",
-      "RELATION",
-      "VARIABLE_TYPE"
-   };
-
    struct SymbolicToken
    {
       SymbolicTokenType token_class = start_S;
@@ -139,7 +139,7 @@ class TableToken
       //get<0> - это int значение для отношений и ариф. операций
       //get<1> - это ячейка для таблицы констант
       //get<2> - это ячейка дтя таблицы переменных
-      variant<int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> value = 0;
+      variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> value = " ";
       int number_line = 0;
    };
 
@@ -197,8 +197,6 @@ class TableToken
    {
       table_constants.emplace(constant);
 
-      register_value = constant;
-
       register_indicator = table_constants.find(constant);
    }
 
@@ -216,8 +214,6 @@ class TableToken
       int constant = stoi(a);
 
       table_constants.emplace(constant);
-
-      register_value = constant;
 
       register_indicator = table_constants.find(constant);
    }
@@ -250,12 +246,12 @@ class TableToken
    }
 
    //Процедура СОЗДАТЬ_ЛЕКСЕМУ
-   void Create_Token()
+   void Create_Token(string value_)
    {
       Token result;
 
-      if (register_type_token >= 12 && register_type_token <= 38)
-         result.value = register_value;
+      if (register_type_token >= 12 && register_type_token <= 35)
+         result.value = value_;
       else if (register_indicator.index() == 1)
       {
          result.value = get<1>(register_indicator);
@@ -269,8 +265,29 @@ class TableToken
 
       table_tokens.push_back(result);
 
-      register_value = -1;
+      Print_Token(result);
+   }
 
+   void Create_Token()
+   {
+      Token result;
+
+      if (register_type_token >= 12 && register_type_token <= 32)
+         result.value = " ";
+      else if (register_indicator.index() == 1)
+      {
+         result.value = get<1>(register_indicator);
+      }
+      else if (register_indicator.index() == 0)
+      {
+         result.value = get<0>(register_indicator);
+      }
+      result.token_class = register_type_token;
+      result.number_line = number_line;
+
+      table_tokens.push_back(result);
+
+      Print_Token(result);
    }
 
    //Процедура обработки ошибок
@@ -286,21 +303,21 @@ class TableToken
    {
       register_type_token = TokenType::ERROR;
       Create_Token();
-      cerr << "An error was found in the number line " << number_line << "; Wrong operation " << error << endl;
+      cerr << "An error was found in the number line " << number_line << "; Wrong operation \"" << error << "\"" << endl;
    }
 
    void Error_Handler_Variable(string error)
    {
       register_type_token = TokenType::ERROR;
       Create_Token();
-      cerr << "An error was found in the number line " << number_line << "; Wrong variable " << error << endl;
+      cerr << "An error was found in the number line " << number_line << "; Wrong variable \"" << error << "\"" << endl;
    }
 
    void Error_Handler_Constant(string error)
    {
       register_type_token = TokenType::ERROR;
       Create_Token();
-      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type int " << error << endl;;
+      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type int \"" << "\"" << endl;
 
    }
 
@@ -321,10 +338,8 @@ class TableToken
    //Регистр отношения хранит информацию о первом символе отношения
    int register_relation = 0;
 
-   //Регистр значения хранит значения лексем
-   int register_value = -1;
-
    //Номер строки хранит номер текущей строки в программе
+   //Line number stores the number of the current line in the program
    int number_line = 1;
 
    Token token;
@@ -477,7 +492,7 @@ public:
       ifstream in(filename);
       if (!in)
       {
-         cout << "Не удалось открыть файл " << filename << endl;
+         cout << "Couldn't open the file " << filename << endl;
          return table_tokens;
       }
 
@@ -499,6 +514,8 @@ public:
          {
             accumulation_of_value += symbolic_token.value;
          }
+         else if (prev_character == SymbolicTokenType::SPACE || prev_character == SymbolicTokenType::LF)
+            accumulation_of_value = symbolic_token.value;
          else
          {
             switch (prev_character)
@@ -511,12 +528,14 @@ public:
                }
                else
                {
+                  //Проблема
                   Add_Variable(accumulation_of_value);
                }
                break;
 
             case (SymbolicTokenType::DIGIT):
 
+               //Проблема
                Add_Constant(accumulation_of_value);
                break;
 
@@ -530,13 +549,16 @@ public:
                   Error_Handler_Operation(accumulation_of_value);
             }
             
-            Create_Token();
+            Create_Token(accumulation_of_value);
+            accumulation_of_value = character;
          }
 
          if (symbolic_token.token_class == LF)
             number_line++;
          else if (symbolic_token.token_class == END)
             flag = false;
+
+         prev_character = symbolic_token.token_class;
       }
 
       return table_tokens;
@@ -544,12 +566,12 @@ public:
 
    void Print_Table_Token()
    {
-      for (auto i : table_tokens)
+      for (auto& i : table_tokens)
       {
          cout << i.number_line << " ";
          cout << TokenTypeString[i.token_class] << " ";
          if (i.token_class >= 0 && i.token_class <= 32)
-            ;//Ничего не происходит
+            ;//Nothing
          else if (i.value.index() == 0)
             cout << get<0>(i.value);
          else if (i.value.index() == 2)
@@ -567,6 +589,85 @@ public:
                cout << get<1>(*(get<1>(i.value))) << " ";
          }
          cout << endl;
+      }
+   }
+
+   void Print_Token(Token i)
+   {
+      cout << "Test: ";
+      cout << i.number_line << " ";
+      cout << TokenTypeString[i.token_class] << " ";
+      if (i.token_class >= 0 && i.token_class <= 32)
+         ;//Nothing
+      else if (i.value.index() == 0)
+         cout << get<0>(i.value);
+      else if (i.value.index() == 2)
+      {
+         if (get<2>(i.value)->second.index() == 0)
+            cout << get<2>(i.value)->first << " ";
+         else
+            cout << get<2>(i.value)->first << " ";
+      }
+      else if (i.value.index() == 1)
+      {
+         if (get<1>(i.value)->index() == 0)
+            cout << get<0>(*(get<1>(i.value))) << " ";
+         else
+            cout << get<1>(*(get<1>(i.value))) << " ";
+      }
+      cout << endl;
+   }
+
+   friend ostream& operator<<(ostream& stream, const Token& object_)
+   {
+      stream << object_.number_line << " ";
+      stream << TokenTypeString[object_.token_class] << " ";
+      if (object_.token_class >= 0 && object_.token_class <= 32)
+         ;//Nothing
+      else if (object_.value.index() == 0)
+         stream << get<0>(object_.value);
+      else if (object_.value.index() == 2)
+      {
+         if (get<2>(object_.value)->second.index() == 0)
+            stream << get<2>(object_.value)->first << " ";
+         else
+            stream << get<2>(object_.value)->first << " ";
+      }
+      else if (object_.value.index() == 1)
+      {
+         if (get<1>(object_.value)->index() == 0)
+            stream << get<0>(*(get<1>(object_.value))) << " ";
+         else
+            stream << get<1>(*(get<1>(object_.value))) << " ";
+      }
+      stream << endl;
+   }
+
+   friend ostream& operator<<(ostream& stream, const vector<Token>& object_)
+   {
+      for (auto& i : object_)
+      {
+         stream << i.number_line << " ";
+         stream << TokenTypeString[i.token_class] << " ";
+         if (i.token_class >= 0 && i.token_class <= 32)
+            ;//Nothing
+         else if (i.value.index() == 0)
+            stream << get<0>(i.value);
+         else if (i.value.index() == 2)
+         {
+            if (get<2>(i.value)->second.index() == 0)
+               stream << get<2>(i.value)->first << " ";
+            else
+               stream << get<2>(i.value)->first << " ";
+         }
+         else if (i.value.index() == 1)
+         {
+            if (get<1>(i.value)->index() == 0)
+               stream << get<0>(*(get<1>(i.value))) << " ";
+            else
+               stream << get<1>(*(get<1>(i.value))) << " ";
+         }
+         stream << endl;
       }
    }
 };
