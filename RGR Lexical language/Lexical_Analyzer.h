@@ -206,12 +206,18 @@ class TableToken
 
    void Add_Constant(string a)
    {
-      if (!Is_this_constant(a))
-         return Error_Handler_Constant(a);
-
       if (S_more_I(a))
       {
-         Add_Constant(from_string_to_vector_short(a));
+         if (!Is_this_constant(a))
+            Error_Handler_Constant_BN(a);
+         else
+            Add_Constant(from_string_to_vector_short(a));
+         return;
+      }
+
+      if (!Is_this_constant(a))
+      {
+         Error_Handler_Constant(a);
          return;
       }
 
@@ -250,7 +256,7 @@ class TableToken
    }
 
    //Процедура СОЗДАТЬ_ЛЕКСЕМУ
-   void Create_Token(string value_)
+   void Create_Token(string value_ = " ")
    {
       Token result;
 
@@ -268,60 +274,44 @@ class TableToken
       result.number_line = number_line;
 
       table_tokens.push_back(result);
-
-      Print_Token(result);
-   }
-
-   void Create_Token()
-   {
-      Token result;
-
-      if (register_type_token >= 12 && register_type_token <= 32)
-         result.value = " ";
-      else if (register_indicator.index() == 1)
-      {
-         result.value = get<1>(register_indicator);
-      }
-      else if (register_indicator.index() == 0)
-      {
-         result.value = get<0>(register_indicator);
-      }
-      result.token_class = register_type_token;
-      result.number_line = number_line;
-
-      table_tokens.push_back(result);
-
-      Print_Token(result);
    }
 
    //Процедура обработки ошибок
-   void Error_Handler(ifstream& in)
+   void Error_Handler(string error)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token();
-      cerr << "An error was found in the number line " << number_line << endl;
+
+      cerr << "An error was found in the number line " << number_line << "; " << error << endl;
    }
 
 
    void Error_Handler_Operation(string error)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token();
+
       cerr << "An error was found in the number line " << number_line << "; Wrong operation \"" << error << "\"" << endl;
    }
 
    void Error_Handler_Variable(string error)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token();
+
       cerr << "An error was found in the number line " << number_line << "; Wrong variable \"" << error << "\"" << endl;
    }
 
    void Error_Handler_Constant(string error)
    {
       register_type_token = TokenType::ERROR;
-      Create_Token();
+
       cerr << "An error was found in the number line " << number_line << "; Wrong constant with type int \"" << "\"" << endl;
+
+   }
+
+   void Error_Handler_Constant_BN(string error)
+   {
+      register_type_token = TokenType::ERROR;
+
+      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type BN \"" << "\"" << endl;
 
    }
 
@@ -377,16 +367,6 @@ class TableToken
       return true;
    }
 
-   bool Is_this_constant(vector<short> constant)
-   {
-      for (auto i : constant)
-      {
-         if (!(i >= '0' && i <= '9'))
-            return false;
-      }
-      return true;
-   }
-
    vector<short> reverseDigits(vector<short> num)
    {
       vector<short> rev_num;
@@ -420,6 +400,45 @@ class TableToken
          b.push_back(i - '0');
       }
       return b;
+   }
+
+   bool Is_this_start_comment(string a)
+   {
+      if (a.size() < 3)
+         return false;
+      if (a[0] == a[1] && a[1] == a[2] && a[0] == '<')
+         return true;
+      return false;
+   }
+
+   bool Is_this_end_comment(string a)
+   {
+      if (a.size() < 3)
+         return false;
+      if (a[a.size()-1] == a[a.size()-2] && a[a.size()-2] == a[a.size()-3] && a[a.size()-1] == '>')
+         return true;
+      return false;
+   }
+
+   bool Is_this_o_braces(string a)
+   {
+      if (a[0] == '(')
+         return true;
+      return false;
+   }
+
+   bool Is_this_c_braces(string a)
+   {
+      if (a[0] == ')')
+         return true;
+      return false;
+   }
+
+   bool Is_this_empty_operators(string a)
+   {
+      if (a[0] == ';')
+         return true;
+      return false;
    }
 
 
@@ -507,12 +526,31 @@ public:
       SymbolicTokenType prev_character;
       prev_character = Transliterator(in.peek()).token_class;
       string accumulation_of_value;
+      bool flag_comment = false;
 
       while (flag)
       {
          int character = in.get();
          symbolic_token = Transliterator(character);
          
+         if (flag_comment)
+         {
+            accumulation_of_value += symbolic_token.value;
+            if (Is_this_end_comment(accumulation_of_value))
+            {
+               flag_comment = false;
+               register_type_token = TokenType::C_COMMENT;
+               prev_character = Transliterator(in.peek()).token_class;
+               accumulation_of_value.clear();
+               Create_Token(accumulation_of_value);
+            }
+            if (symbolic_token.token_class == END)
+            {
+               Error_Handler("The comment is not closed");
+               break;
+            }
+            continue;
+         }
 
          if (prev_character == symbolic_token.token_class || (Is_in_variable(symbolic_token.token_class) && Is_in_variable(prev_character)))
          {
@@ -532,24 +570,51 @@ public:
                }
                else
                {
-                  //Проблема
-                  Add_Variable(accumulation_of_value);
                   register_type_token = TokenType::VARIABLE;
+                  Add_Variable(accumulation_of_value);
                }
                break;
 
             case (SymbolicTokenType::DIGIT):
 
-               //Проблема
-               Add_Constant(accumulation_of_value);
                register_type_token = TokenType::CONSTANT;
+               Add_Constant(accumulation_of_value);
                break;
 
             default:
 
-               if (table_operations.count(accumulation_of_value))
+               if (Is_this_start_comment(accumulation_of_value))
+               {
+                  register_type_token = TokenType::O_COMMENT;
+                  flag_comment = true;
+               }
+               else if (table_operations.count(accumulation_of_value))
                {
                   register_type_token = table_operations[accumulation_of_value];
+               }
+               else if (Is_this_o_braces(accumulation_of_value))
+               {
+                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
+                  {
+                     register_type_token = TokenType::O_BRACE;
+                     Create_Token(accumulation_of_value);
+                  }
+               }
+               else if (Is_this_c_braces(accumulation_of_value))
+               {
+                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
+                  {
+                     register_type_token = TokenType::C_BRACE;
+                     Create_Token(accumulation_of_value);
+                  }
+               }
+               else if (Is_this_empty_operators(accumulation_of_value))
+               {
+                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
+                  {
+                     register_type_token = TokenType::EMPTY_OPERATOR;
+                     Create_Token();
+                  }
                }
                else
                   Error_Handler_Operation(accumulation_of_value);
@@ -600,7 +665,6 @@ public:
 
    void Print_Token(Token i)
    {
-      cout << "Test: ";
       cout << i.number_line << " ";
       cout << TokenTypeString[i.token_class] << " ";
       if (i.token_class >= 0 && i.token_class <= 32)
@@ -677,3 +741,4 @@ public:
       }
    }
 };
+

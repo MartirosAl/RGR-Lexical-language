@@ -1,0 +1,7 @@
+declareHELLO_WORLD asint;
+;;;;;;;;
+<<< оментарий
+многострочным
+	   должен
+	  быть>>>
+by do od od; goodby my 0dear fri4287_end else do;
