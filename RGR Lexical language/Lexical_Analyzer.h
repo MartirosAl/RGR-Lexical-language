@@ -285,10 +285,7 @@ class TableToken
       register_type_token = TokenType::ERROR;
 
       cerr << "An error was found in the number line " << number_line << "; Wrong variable \"" << error << "\"" << endl;
-      if (error[0] == '_')
-         cerr << "A variable cannot start with a underlining." << endl;
-      else
-         cerr << "A variable cannot start with a digit." << endl;
+      cerr << "A variable cannot start with a digit." << endl;
    }
 
 
@@ -323,7 +320,7 @@ class TableToken
 
    bool Is_this_variable(string word)
    {
-      if (!((word[0] >= 'a' && word[0] <= 'z') || (word[0] >= 'A' && word[0] <= 'Z')))
+      if (!((word[0] >= 'a' && word[0] <= 'z') || (word[0] >= 'A' && word[0] <= 'Z') || word[0] == '_'))
          return false;
       for (auto i : word)
       {
@@ -496,7 +493,7 @@ public:
       }
 
       string word;
-
+      
       bool flag = true;
 
       SymbolicTokenType prev_character;

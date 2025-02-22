@@ -7,6 +7,7 @@ int main()
    TableToken result;
    result.Lexical_Analyzer("Test4.txt");
    cout << endl;
+   int _;
    result.Print_Table_Token();
    return 0;
 }
