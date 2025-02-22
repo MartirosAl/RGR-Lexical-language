@@ -2,7 +2,7 @@ while ) x17 == == if void 45
 
 ++
 
-if(x+y)>z'
+if(x+y)>z
 
 
 iffor1
