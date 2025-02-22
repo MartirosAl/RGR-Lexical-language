@@ -9,23 +9,6 @@
 #include <vector>
 using namespace std;
 
-vector<string> SymbolicTokenTypeString
-{
-   "LETTER",
-   "DIGIT",
-   "ARITHMETIC_OPERATION",
-   "RELATION",
-   "SPACE",
-   "LF",
-   "SEMI_COLON",
-   "ERROR",
-   "O_BRACE",
-   "C_BRACE",
-   "UNDERLINING",
-   "END",
-   "END_MARKER"
-};
-
 vector<string> TokenTypeString
 {
    "EMPTY_OPERATOR",
@@ -131,6 +114,7 @@ class TableToken
       VARIABLE,
       CONSTANT
    };
+
    struct SymbolicToken
    {
       SymbolicTokenType token_class = start_S;
@@ -180,13 +164,14 @@ class TableToken
    map<string, TokenType> table_detection
    {
       {"int", VARIABLE_TYPE}, {"BigNumber", VARIABLE_TYPE},
-      {"while", WHILE}, {"do", DO}, {"od", OD},
-      {"for", FOR}, {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
-      {"if", IF}, {"else", ELSE}, {"fi", FI},
+
+      {"while", WHILE},                                               {"do", DO}, {"od", OD},
+      {"for", FOR},           {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
+      {"if", IF},                                                 {"else", ELSE}, {"fi", FI},
       {"input", INPUT},
       {"print", PRINT},
       {"goto", GO_TO_MARK},
-      {"select", SELECT}, {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
+      {"select", SELECT},    {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
       {"raise", RAISE}
    };
 
@@ -201,21 +186,8 @@ class TableToken
       {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING}
    };
 
-   bool Is_Keyword(string word)
-   {
-      return table_detection.contains(word);
-   }
-
-
    //œÓˆÂ‰Û‡ ƒŒ¡¿¬»“‹_ ŒÕ—“¿Õ“”
    //Procedure TO ADD_CONSTANT
-   void Add_Constant(int constant)
-   {
-      table_constants.emplace(constant);
-
-      register_indicator = table_constants.find(constant);
-   }
-
    void Add_Constant(string a)
    {
       if (S_more_I(a))
@@ -305,7 +277,7 @@ class TableToken
    {
       register_type_token = TokenType::ERROR;
 
-      cerr << "An error was found in the number line " << number_line << "; Wrong operation \"" << error << "\"" << endl;
+      cerr << "An error was found in the number line " << number_line << "; This operation was not found \"" << error << "\"" << endl;
    }
 
    void Error_Handler_Variable(string error)
@@ -313,23 +285,10 @@ class TableToken
       register_type_token = TokenType::ERROR;
 
       cerr << "An error was found in the number line " << number_line << "; Wrong variable \"" << error << "\"" << endl;
-      cerr << "A variable cannot start with a digit." << endl;
-   }
-
-   void Error_Handler_Constant(string error)
-   {
-      register_type_token = TokenType::ERROR;
-
-      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type int \"" << "\"" << endl;
-
-   }
-
-   void Error_Handler_Constant_BN(string error)
-   {
-      register_type_token = TokenType::ERROR;
-
-      cerr << "An error was found in the number line " << number_line << "; Wrong constant with type BN \"" << "\"" << endl;
-
+      if (error[0] == '_')
+         cerr << "A variable cannot start with a underlining." << endl;
+      else
+         cerr << "A variable cannot start with a digit." << endl;
    }
 
 
