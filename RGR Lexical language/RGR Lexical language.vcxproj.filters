@@ -43,6 +43,9 @@
     <Text Include="Test3.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="Test5.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Test4.txt">

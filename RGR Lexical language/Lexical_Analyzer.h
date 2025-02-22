@@ -1,12 +1,12 @@
 #pragma once
 #include "BigNumber.h"
-#include <iostream>
 #include <fstream>
-#include <string>
-#include <vector>
-#include <variant>
+#include <iostream>
 #include <map>
 #include <set>
+#include <string>
+#include <variant>
+#include <vector>
 using namespace std;
 
 vector<string> SymbolicTokenTypeString
@@ -143,6 +143,10 @@ class TableToken
       //get<0> - это int значение для отношений и ариф. операций
       //get<1> - это ячейка для таблицы констант
       //get<2> - это ячейка дтя таблицы переменных
+      //
+      //get<0> is an int value for relations and arif. operations
+      //get<1> is the cell for the table of constants.
+      //get<2> is the child cell of the variable table.
       variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> value = " ";
       int number_line = 0;
    };
@@ -153,19 +157,26 @@ class TableToken
    };
 
    //ТАБЛИЦЫ//
+   //TABLES//
 
-//Таблица констант
+   //Таблица констант
+   //Table of constants
    set<variant<int, BigNumber>> table_constants;
 
    //Таблица переменных
+   //Table of variables
    map<string, variant<int, BigNumber>> table_variable;
 
    //Таблица лексем для вывода
    //Вектор вариантов (int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator)
+   //Table of tokens for output
+   //Vector of variants (int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator)
    vector<Token> table_tokens;
 
    //Таблицы для обнаружения ключевых слов
    //Одинаковые элементы удалятся
+   //Tables for keyword detection
+   //Identical elements are deleted
    map<string, TokenType> table_detection
    {
       {"int", VARIABLE_TYPE}, {"BigNumber", VARIABLE_TYPE},
@@ -197,6 +208,7 @@ class TableToken
 
 
    //Процедура ДОБАВИТЬ_КОНСТАНТУ
+   //Procedure TO ADD_CONSTANT
    void Add_Constant(int constant)
    {
       table_constants.emplace(constant);
@@ -238,6 +250,7 @@ class TableToken
    }
 
    //Процедура ДОБАВИТЬ_ПЕРЕМЕННУЮ
+   //Procedure ADD_THE_VARIABLE
    void Add_Variable(string word)
    {
 
@@ -257,6 +270,7 @@ class TableToken
    }
 
    //Процедура СОЗДАТЬ_ЛЕКСЕМУ
+   //Procedure CREATE_A_TOKEN
    void Create_Token(string value_ = " ")
    {
       Token result;
@@ -278,6 +292,7 @@ class TableToken
    }
 
    //Процедура обработки ошибок
+   //Error handling procedure
    void Error_Handler(string error)
    {
       register_type_token = TokenType::ERROR;
@@ -319,20 +334,20 @@ class TableToken
 
 
    //ПЕРЕМЕННЫЕ//
+   //VARIABLES//
 
    //Регистр класса служит для хранения класса лексемы
+   //The class register is used to store the class of the token
    TokenType register_type_token = (TokenType)start;
 
    //Регистр указателя содержит указатель на таблицу имён
    //get<0> - итератор(указатель) на таблицу констант
    //get<1> - итератор(указатель) на таблицу переменных
+   // 
+   //The pointer register contains a pointer to the table of names
+   //get<0> - iterator(pointer) to the table of constants
+   //get<1> - iterator(pointer) to the table of variables
    variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> register_indicator;
-
-   //Регистр числа используется для вычисления констант
-   variant<int, vector<short>> register_number;
-
-   //Регистр отношения хранит информацию о первом символе отношения
-   int register_relation = 0;
 
    //Номер строки хранит номер текущей строки в программе
    //Line number stores the number of the current line in the program
@@ -551,6 +566,11 @@ public:
                Error_Handler("The comment is not closed");
                break;
             }
+            if (symbolic_token.token_class == LF)
+            {
+               number_line++;
+            }
+            
             continue;
          }
 
