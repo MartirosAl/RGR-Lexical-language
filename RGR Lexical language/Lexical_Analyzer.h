@@ -38,6 +38,8 @@ vector<string> TokenTypeString
    "ERROR",
    "O_BRACE",
    "C_BRACE",
+   "O_S_BRACE",
+   "C_S_BRACE",
    "COMMA",
    "O_MARK",
    "C_MARK",
@@ -67,6 +69,8 @@ class TableToken
       ERROR_S,
       O_BRACE_S,
       C_BRACE_S,
+      O_S_BRACE_S,
+      C_S_BRACE_S,
       UNDERLINING,
       END,
       END_MARKER
@@ -102,6 +106,8 @@ class TableToken
       ERROR,
       O_BRACE,
       C_BRACE,
+      Î_S_BRACE,
+      C_S_BRACE,
       COMMA,
       O_MARK,
       C_MARK,
@@ -183,7 +189,8 @@ class TableToken
       {")", TokenType::C_BRACE},              {"<", TokenType::RELATION},             {">", TokenType::RELATION}, 
       {"==", TokenType::RELATION},            {"<=", TokenType::RELATION},            {">=", TokenType::RELATION},
       {"!=", TokenType::RELATION},            {"<<", TokenType::O_MARK},              {">>", TokenType::C_MARK}, 
-      {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING}
+      {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING},
+      {"[", TokenType::Î_S_BRACE},            {"]", TokenType::C_S_BRACE}
    };
 
    //Ïðîöåäóðà ÄÎÁÀÂÈÒÜ_ÊÎÍÑÒÀÍÒÓ
@@ -247,7 +254,7 @@ class TableToken
    {
       Token result;
 
-      if (register_type_token >= 12 && register_type_token <= 37)
+      if (register_type_token >= 12)
          result.value = value_;
       else if (register_indicator.index() == 1)
       {
@@ -452,6 +459,16 @@ class TableToken
       else if (character == ')')
       {
          result.token_class = SymbolicTokenType::C_BRACE_S;
+         result.value = (int)character;
+      }
+      else if (character == '[')
+      {
+         result.token_class = SymbolicTokenType::O_S_BRACE_S;
+         result.value = (int)character;
+      }
+      else if (character == ']')
+      {
+         result.token_class = SymbolicTokenType::C_S_BRACE_S;
          result.value = (int)character;
       }
       else if (character == ' ' || character == '\t')
