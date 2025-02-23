@@ -106,7 +106,7 @@ class TableToken
       ERROR,
       O_BRACE,
       C_BRACE,
-      Œ_S_BRACE,
+      O_S_BRACE,
       C_S_BRACE,
       COMMA,
       O_MARK,
@@ -190,7 +190,7 @@ class TableToken
       {"==", TokenType::RELATION},            {"<=", TokenType::RELATION},            {">=", TokenType::RELATION},
       {"!=", TokenType::RELATION},            {"<<", TokenType::O_MARK},              {">>", TokenType::C_MARK}, 
       {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING},
-      {"[", TokenType::Œ_S_BRACE},            {"]", TokenType::C_S_BRACE}
+      {"[", TokenType::O_S_BRACE},            {"]", TokenType::C_S_BRACE}
    };
 
    //œÓˆÂ‰Û‡ ƒŒ¡¿¬»“‹_ ŒÕ—“¿Õ“”
@@ -414,6 +414,20 @@ class TableToken
       return false;
    }
 
+   bool Is_this_o_s_braces(string a)
+   {
+      if (a[0] == '[')
+         return true;
+      return false;
+   }
+
+   bool Is_this_c_s_braces(string a)
+   {
+      if (a[0] == ']')
+         return true;
+      return false;
+   }
+
    bool Is_this_empty_operators(string a)
    {
       if (a[0] == ';')
@@ -600,6 +614,22 @@ public:
                   for (int i = 0; i < accumulation_of_value.size() - 1; i++)
                   {
                      register_type_token = TokenType::C_BRACE;
+                     Create_Token(accumulation_of_value);
+                  }
+               }
+               else if (Is_this_o_s_braces(accumulation_of_value))
+               {
+                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
+                  {
+                     register_type_token = TokenType::O_S_BRACE;
+                     Create_Token(accumulation_of_value);
+                  }
+               }
+               else if (Is_this_c_s_braces(accumulation_of_value))
+               {
+                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
+                  {
+                     register_type_token = TokenType::C_S_BRACE;
                      Create_Token(accumulation_of_value);
                   }
                }
