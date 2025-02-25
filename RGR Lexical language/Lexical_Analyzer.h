@@ -11,46 +11,47 @@ using namespace std;
 
 vector<string> TokenTypeString
 {
-   "EMPTY_OPERATOR",
-   "DECLARING_VARIABLES",
-   "ASSIGNMENT_OPERATOR",
-   "WHILE",
-   "DO",
-   "OD",
-   "FOR",
-   "FROM",
-   "TO",
-   "BY",
-   "IF",
-   "ELSE",
-   "FI",
-   "SELECT",
-   "IN",
-   "CASE",
-   "OTHERWISE",
-   "NI",
-   "INPUT",
-   "PRINT",
-   "MARK",
-   "GO_TO_MARK",
-   "RAISE",
-   "COMMENT",
-   "ERROR",
-   "O_BRACE",
-   "C_BRACE",
-   "O_S_BRACE",
-   "C_S_BRACE",
-   "COMMA",
-   "O_MARK",
-   "C_MARK",
-   "O_COMMENT",
-   "C_COMMENT",
-   "CASE_LISTING",
-   "ARITHMETIC_OPERATION",
-   "RELATION",
-   "VARIABLE_TYPE",
-   "VARIABLE",
-   "CONSTANT"
+      "VARIABLE",
+      "CONSTANT",
+      "EMPTY_OPERATOR",
+      "DECLARING_VARIABLES",
+      "AS",
+      "ASSIGNMENT_OPERATOR",
+      "WHILE",
+      "DO",
+      "OD",
+      "FOR",
+      "FROM",
+      "TO",
+      "BY",
+      "IF",
+      "ELSE",
+      "FI",
+      "SELECT",
+      "IN",
+      "CASE",
+      "OTHERWISE",
+      "NI",
+      "INPUT",
+      "PRINT",
+      "MARK",
+      "GO_TO_MARK",
+      "RAISE",
+      "COMMENT",
+      "ERROR",
+      "O_BRACE",
+      "C_BRACE",
+      "O_S_BRACE",
+      "C_S_BRACE",
+      "COMMA",
+      "O_MARK",
+      "C_MARK",
+      "O_COMMENT",
+      "C_COMMENT",
+      "CASE_LISTING",
+      "ARITHMETIC_OPERATION",
+      "RELATION",
+      "VARIABLE_TYPE"
 };
 
 class TableToken
@@ -79,8 +80,11 @@ class TableToken
    enum TokenType
    {
       start = -1,
+      VARIABLE,
+      CONSTANT,
       EMPTY_OPERATOR,
       DECLARING_VARIABLES,
+      AS,
       ASSIGNMENT_OPERATOR,
       WHILE,
       DO,
@@ -116,9 +120,7 @@ class TableToken
       CASE_LISTING,
       ARITHMETIC_OPERATION,
       RELATION,
-      VARIABLE_TYPE,
-      VARIABLE,
-      CONSTANT
+      VARIABLE_TYPE
    };
 
    struct SymbolicToken
@@ -170,7 +172,7 @@ class TableToken
    map<string, TokenType> table_detection
    {
       {"int", VARIABLE_TYPE}, {"BigNumber", VARIABLE_TYPE},
-
+      {"declare", DECLARING_VARIABLES},                                           {"as", AS},
       {"while", WHILE},                                               {"do", DO}, {"od", OD},
       {"for", FOR},           {"from", FROM}, {"to", TO}, {"by", BY}, {"do", DO}, {"od", OD},
       {"if", IF},                                                 {"else", ELSE}, {"fi", FI},
@@ -254,7 +256,7 @@ class TableToken
    {
       Token result;
 
-      if (register_type_token >= 12)
+      if (register_type_token >= 2)
          result.value = value_;
       else if (register_indicator.index() == 1)
       {
@@ -617,22 +619,6 @@ public:
                      Create_Token(accumulation_of_value);
                   }
                }
-               else if (Is_this_o_s_braces(accumulation_of_value))
-               {
-                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
-                  {
-                     register_type_token = TokenType::O_S_BRACE;
-                     Create_Token(accumulation_of_value);
-                  }
-               }
-               else if (Is_this_c_s_braces(accumulation_of_value))
-               {
-                  for (int i = 0; i < accumulation_of_value.size() - 1; i++)
-                  {
-                     register_type_token = TokenType::C_S_BRACE;
-                     Create_Token(accumulation_of_value);
-                  }
-               }
                else if (Is_this_empty_operators(accumulation_of_value))
                {
                   for (int i = 0; i < accumulation_of_value.size() - 1; i++)
@@ -666,7 +652,7 @@ public:
       {
          cout << i.number_line << " ";
          cout << TokenTypeString[i.token_class] << " ";
-         if (i.token_class >= 0 && i.token_class <= 32)
+         if (i.token_class >= 2)
             ;//Nothing
          else if (i.value.index() == 0)
             cout << get<0>(i.value);
@@ -692,7 +678,7 @@ public:
    {
       cout << i.number_line << " ";
       cout << TokenTypeString[i.token_class] << " ";
-      if (i.token_class >= 0 && i.token_class <= 32)
+      if (i.token_class >= 2)
          ;//Nothing
       else if (i.value.index() == 0)
          cout << get<0>(i.value);
