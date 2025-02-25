@@ -13,6 +13,12 @@ vector<string> TokenTypeString
 {
       "VARIABLE",
       "CONSTANT",
+      "MARK",
+      "GO_TO_MARK",
+      "VARIABLE_TYPE",
+      "ARITHMETIC_OPERATION",
+      "RELATION",
+
       "EMPTY_OPERATOR",
       "DECLARING_VARIABLES",
       "AS",
@@ -34,8 +40,7 @@ vector<string> TokenTypeString
       "NI",
       "INPUT",
       "PRINT",
-      "MARK",
-      "GO_TO_MARK",
+
       "RAISE",
       "COMMENT",
       "ERROR",
@@ -44,14 +49,10 @@ vector<string> TokenTypeString
       "O_S_BRACE",
       "C_S_BRACE",
       "COMMA",
-      "O_MARK",
-      "C_MARK",
+
       "O_COMMENT",
       "C_COMMENT",
-      "CASE_LISTING",
-      "ARITHMETIC_OPERATION",
-      "RELATION",
-      "VARIABLE_TYPE"
+      "CASE_LISTING"
 };
 
 class TableToken
@@ -82,6 +83,12 @@ class TableToken
       start = -1,
       VARIABLE,
       CONSTANT,
+      MARK,
+      GO_TO_MARK,
+      VARIABLE_TYPE,
+      ARITHMETIC_OPERATION,
+      RELATION,
+
       EMPTY_OPERATOR,
       DECLARING_VARIABLES,
       AS,
@@ -103,8 +110,7 @@ class TableToken
       NI,
       INPUT,
       PRINT,
-      MARK,
-      GO_TO_MARK,
+
       RAISE,
       COMMENT,
       ERROR,
@@ -113,14 +119,11 @@ class TableToken
       O_S_BRACE,
       C_S_BRACE,
       COMMA,
-      O_MARK,
-      C_MARK,
+
       O_COMMENT,
       C_COMMENT,
-      CASE_LISTING,
-      ARITHMETIC_OPERATION,
-      RELATION,
-      VARIABLE_TYPE
+      CASE_LISTING
+
    };
 
    struct SymbolicToken
@@ -134,12 +137,14 @@ class TableToken
       TokenType token_class = (TokenType)start;
       //get<0> - это int значение для отношений и ариф. операций
       //get<1> - это ячейка для таблицы констант
-      //get<2> - это ячейка дтя таблицы переменных
+      //get<2> - это ячейка для таблицы переменных
+      //get<3> - это ячейка для таблицы меток
       //
       //get<0> is an int value for relations and arif. operations
       //get<1> is the cell for the table of constants.
-      //get<2> is the child cell of the variable table.
-      variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> value = " ";
+      //get<2> is the cell for the variable table.
+      //get<3> is the cell for the mark table.
+      variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> value = " ";
       int number_line = 0;
    };
 
@@ -158,6 +163,11 @@ class TableToken
    //Таблица переменных
    //Table of variables
    map<string, variant<int, BigNumber>> table_variable;
+
+   //Таблица меток
+   //Table of lables(marks)
+   vector<string> table_marks;
+
 
    //Таблица лексем для вывода
    //Вектор вариантов (int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator)
@@ -190,7 +200,7 @@ class TableToken
       {"/", TokenType::ARITHMETIC_OPERATION}, {"%", TokenType::ARITHMETIC_OPERATION}, {"(", TokenType::O_BRACE}, 
       {")", TokenType::C_BRACE},              {"<", TokenType::RELATION},             {">", TokenType::RELATION}, 
       {"==", TokenType::RELATION},            {"<=", TokenType::RELATION},            {">=", TokenType::RELATION},
-      {"!=", TokenType::RELATION},            {"<<", TokenType::O_MARK},              {">>", TokenType::C_MARK}, 
+      {"!=", TokenType::RELATION},            
       {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING},
       {"[", TokenType::O_S_BRACE},            {"]", TokenType::C_S_BRACE}
    };
@@ -228,6 +238,17 @@ class TableToken
       table_constants.emplace(temp);
 
       register_indicator = table_constants.find(temp);
+   }
+   
+   //Процедура ДОБАВИТЬ_МЕТКУ
+   //Procedure ADD_THE_MARK
+   void Add_Mark(string a)
+   {
+      if (!count(table_marks.begin(), table_marks.end(), a))
+      {
+         table_marks.push_back(a);
+      }
+      register_indicator = find(table_marks.begin(), table_marks.end(), a);
    }
 
    //Процедура ДОБАВИТЬ_ПЕРЕМЕННУЮ
@@ -308,11 +329,13 @@ class TableToken
    //Регистр указателя содержит указатель на таблицу имён
    //get<0> - итератор(указатель) на таблицу констант
    //get<1> - итератор(указатель) на таблицу переменных
+   //get<2> - итератор(указатель) на таблицу меток
    // 
    //The pointer register contains a pointer to the table of names
    //get<0> - iterator(pointer) to the table of constants
    //get<1> - iterator(pointer) to the table of variables
-   variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator> register_indicator;
+   //get<2> - iterator(pointer) to the table of marks
+   variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> register_indicator;
 
    //Номер строки хранит номер текущей строки в программе
    //Line number stores the number of the current line in the program
@@ -437,6 +460,20 @@ class TableToken
       return false;
    }
 
+   bool Is_this_o_mark(string a)
+   {
+      if (a[0] == a[1] && a[0] == '<')
+         return true;
+      return false;
+   }
+
+   bool Is_this_c_mark(string a)
+   {
+      if (a[a.size() - 1] == a[a.size() - 2] && a[a.size() - 1] == '>')
+         return true;
+      return false;
+   }
+
 
    SymbolicToken Transliterator(int character)
    {
@@ -530,9 +567,11 @@ public:
       bool flag = true;
 
       SymbolicTokenType prev_character;
+      TokenType prev_token = start;
       prev_character = Transliterator(in.peek()).token_class;
       string accumulation_of_value;
       bool flag_comment = false;
+      bool flag_mark = false;
 
       while (flag)
       {
@@ -541,15 +580,6 @@ public:
          
          if (flag_comment)
          {
-            accumulation_of_value += symbolic_token.value;
-            if (Is_this_end_comment(accumulation_of_value))
-            {
-               flag_comment = false;
-               register_type_token = TokenType::C_COMMENT;
-               prev_character = Transliterator(in.peek()).token_class;
-               accumulation_of_value.clear();
-               Create_Token(accumulation_of_value);
-            }
             if (symbolic_token.token_class == END)
             {
                Error_Handler("The comment is not closed");
@@ -559,7 +589,46 @@ public:
             {
                number_line++;
             }
-            
+            accumulation_of_value += symbolic_token.value;
+            if (Is_this_end_comment(accumulation_of_value))
+            {
+               flag_comment = false;
+               register_type_token = TokenType::C_COMMENT;
+               prev_character = Transliterator(in.peek()).token_class;
+               accumulation_of_value.clear();
+               Create_Token(accumulation_of_value);
+            }
+
+            continue;
+         }
+
+         if (flag_mark)
+         {
+            if (symbolic_token.token_class != LETTER && symbolic_token.token_class != DIGIT && symbolic_token.value != '>')
+            {
+               Error_Handler("Wrong symbol in mark");
+               table_tokens[table_tokens.size() - 1].token_class = register_type_token;
+            }
+            if (symbolic_token.token_class == END || symbolic_token.token_class == LF)
+            {
+               Error_Handler("The mark is not closed");
+               break;
+            }
+            accumulation_of_value += symbolic_token.value;
+            if (Is_this_c_mark(accumulation_of_value))
+            {
+               flag_mark = false;
+
+               accumulation_of_value.resize(accumulation_of_value.size() - 2);
+
+               Add_Mark(accumulation_of_value);
+               accumulation_of_value.clear();
+               
+               table_tokens[table_tokens.size() - 1].value = get<2>(register_indicator);
+
+               prev_character = Transliterator(in.peek()).token_class;
+            }            
+
             continue;
          }
 
@@ -569,8 +638,16 @@ public:
          }
          else if (prev_character == SymbolicTokenType::SPACE || prev_character == SymbolicTokenType::LF)
             accumulation_of_value = symbolic_token.value;
+         else if (prev_token == GO_TO_MARK)
+         {
+            Add_Mark(accumulation_of_value);
+            table_tokens[table_tokens.size() - 1].value = get<2>(register_indicator);
+            accumulation_of_value = symbolic_token.value;
+            register_type_token = start;
+         }
          else
          {
+
             switch (prev_character)
             {
             case (SymbolicTokenType::LETTER):
@@ -598,6 +675,11 @@ public:
                {
                   register_type_token = TokenType::O_COMMENT;
                   flag_comment = true;
+               }
+               else if (Is_this_o_mark(accumulation_of_value))
+               {
+                  register_type_token = TokenType::MARK;
+                  flag_mark = true;
                }
                else if (table_operations.count(accumulation_of_value))
                {
@@ -633,6 +715,7 @@ public:
             
             Create_Token(accumulation_of_value);
             accumulation_of_value = symbolic_token.value;
+            
          }
 
          if (symbolic_token.token_class == LF)
@@ -641,6 +724,7 @@ public:
             flag = false;
 
          prev_character = symbolic_token.token_class;
+         prev_token = register_type_token;
       }
       
       return table_tokens;
@@ -652,10 +736,14 @@ public:
       {
          cout << i.number_line << " ";
          cout << TokenTypeString[i.token_class] << " ";
-         if (i.token_class >= 2)
+         if (i.token_class >= 7)
             ;//Nothing
          else if (i.value.index() == 0)
             cout << get<0>(i.value);
+         else if (i.value.index() == 3)
+         {
+            cout << *get<3>(i.value) << " ";
+         }
          else if (i.value.index() == 2)
          {
             if (get<2>(i.value)->second.index() == 0)
@@ -678,10 +766,14 @@ public:
    {
       cout << i.number_line << " ";
       cout << TokenTypeString[i.token_class] << " ";
-      if (i.token_class >= 2)
+      if (i.token_class >= 7)
          ;//Nothing
       else if (i.value.index() == 0)
          cout << get<0>(i.value);
+      else if (i.value.index() == 3)
+      {
+         cout << *get<3>(i.value) << " ";
+      }
       else if (i.value.index() == 2)
       {
          if (get<2>(i.value)->second.index() == 0)
@@ -699,57 +791,5 @@ public:
       cout << endl;
    }
 
-   friend ostream& operator<<(ostream& stream, const Token& object_)
-   {
-      stream << object_.number_line << " ";
-      stream << TokenTypeString[object_.token_class] << " ";
-      if (object_.token_class >= 0 && object_.token_class <= 32)
-         ;//Nothing
-      else if (object_.value.index() == 0)
-         stream << get<0>(object_.value);
-      else if (object_.value.index() == 2)
-      {
-         if (get<2>(object_.value)->second.index() == 0)
-            stream << get<2>(object_.value)->first << " ";
-         else
-            stream << get<2>(object_.value)->first << " ";
-      }
-      else if (object_.value.index() == 1)
-      {
-         if (get<1>(object_.value)->index() == 0)
-            stream << get<0>(*(get<1>(object_.value))) << " ";
-         else
-            stream << get<1>(*(get<1>(object_.value))) << " ";
-      }
-      stream << endl;
-   }
-
-   friend ostream& operator<<(ostream& stream, const vector<Token>& object_)
-   {
-      for (auto& i : object_)
-      {
-         stream << i.number_line << " ";
-         stream << TokenTypeString[i.token_class] << " ";
-         if (i.token_class >= 0 && i.token_class <= 32)
-            ;//Nothing
-         else if (i.value.index() == 0)
-            stream << get<0>(i.value);
-         else if (i.value.index() == 2)
-         {
-            if (get<2>(i.value)->second.index() == 0)
-               stream << get<2>(i.value)->first << " ";
-            else
-               stream << get<2>(i.value)->first << " ";
-         }
-         else if (i.value.index() == 1)
-         {
-            if (get<1>(i.value)->index() == 0)
-               stream << get<0>(*(get<1>(i.value))) << " ";
-            else
-               stream << get<1>(*(get<1>(i.value))) << " ";
-         }
-         stream << endl;
-      }
-   }
 };
 

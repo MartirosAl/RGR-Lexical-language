@@ -19,6 +19,7 @@ flag = flag*flag;
 otherwise
 raise;
 ni;
+<<mark>>
 
 <<<<Просто бессмысленная хрень>>>>
 
