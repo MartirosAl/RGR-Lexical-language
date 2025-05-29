@@ -112,12 +112,11 @@ class TableToken
       PRINT,
 
       RAISE,
+      GET,
       COMMENT,
       ERROR,
       O_BRACE,
       C_BRACE,
-      O_S_BRACE,
-      C_S_BRACE,
       COMMA,
 
       O_COMMENT,
@@ -190,7 +189,8 @@ class TableToken
       {"print", PRINT},
       {"goto", GO_TO_MARK},
       {"select", SELECT},    {"in", IN}, {"case", CASE}, {"otherwise", OTHERWISE}, {"ni", NI},
-      {"raise", RAISE}
+      {"raise", RAISE},
+      {"get", GET}
    };
 
    map<string, TokenType> table_operations
@@ -202,7 +202,6 @@ class TableToken
       {"==", TokenType::RELATION},            {"<=", TokenType::RELATION},            {">=", TokenType::RELATION},
       {"!=", TokenType::RELATION},            
       {"<<<", TokenType::O_COMMENT},          {">>>", TokenType::C_COMMENT},          {":", TokenType::CASE_LISTING},
-      {"[", TokenType::O_S_BRACE},            {"]", TokenType::C_S_BRACE}
    };
 
    //œÓˆÂ‰Û‡ ƒŒ¡¿¬»“‹_ ŒÕ—“¿Õ“”
@@ -439,20 +438,6 @@ class TableToken
       return false;
    }
 
-   bool Is_this_o_s_braces(string a)
-   {
-      if (a[0] == '[')
-         return true;
-      return false;
-   }
-
-   bool Is_this_c_s_braces(string a)
-   {
-      if (a[0] == ']')
-         return true;
-      return false;
-   }
-
    bool Is_this_empty_operators(string a)
    {
       if (a[0] == ';')
@@ -514,16 +499,6 @@ class TableToken
          result.token_class = SymbolicTokenType::C_BRACE_S;
          result.value = (int)character;
       }
-      else if (character == '[')
-      {
-         result.token_class = SymbolicTokenType::O_S_BRACE_S;
-         result.value = (int)character;
-      }
-      else if (character == ']')
-      {
-         result.token_class = SymbolicTokenType::C_S_BRACE_S;
-         result.value = (int)character;
-      }
       else if (character == ' ' || character == '\t')
       {
          result.token_class = SymbolicTokenType::SPACE;
@@ -572,6 +547,7 @@ public:
       string accumulation_of_value;
       bool flag_comment = false;
       bool flag_mark = false;
+      bool flag_get = false;
 
       while (flag)
       {
@@ -630,6 +606,11 @@ public:
             }            
 
             continue;
+         }
+
+         if (flag_get)
+         {
+            ;
          }
 
          if (prev_character == symbolic_token.token_class || (Is_in_variable(symbolic_token.token_class) && Is_in_variable(prev_character)))

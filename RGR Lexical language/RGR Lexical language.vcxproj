@@ -131,9 +131,12 @@
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Sintax_Analyzer.cpp" />
+    <ClCompile Include="Sintax_Analyzer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigNumber.h" />
+    <ClInclude Include="Translator.h" />
     <ClInclude Include="Iterator.h" />
     <ClInclude Include="Lexical_Analyzer.h" />
   </ItemGroup>
