@@ -5,14 +5,15 @@
 #include <map>
 #include <set>
 #include <string>
-#include <variant>
 #include <vector>
+#include <variant>
 using namespace std;
 
 vector<string> TokenTypeString
 {
       "VARIABLE",
       "CONSTANT",
+      "GET",
       "MARK",
       "GO_TO_MARK",
       "VARIABLE_TYPE",
@@ -46,9 +47,6 @@ vector<string> TokenTypeString
       "ERROR",
       "O_BRACE",
       "C_BRACE",
-      "O_S_BRACE",
-      "C_S_BRACE",
-      "COMMA",
 
       "O_COMMENT",
       "C_COMMENT",
@@ -71,11 +69,10 @@ class TableToken
       ERROR_S,
       O_BRACE_S,
       C_BRACE_S,
-      O_S_BRACE_S,
-      C_S_BRACE_S,
       UNDERLINING,
       END,
-      END_MARKER
+      END_MARKER,
+      COMMA
    };
 
    enum TokenType
@@ -83,6 +80,7 @@ class TableToken
       start = -1,
       VARIABLE,
       CONSTANT,
+      GET,
       MARK,
       GO_TO_MARK,
       VARIABLE_TYPE,
@@ -144,6 +142,7 @@ class TableToken
       //get<2> is the cell for the variable table.
       //get<3> is the cell for the mark table.
       variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> value = " ";
+      set<variant<int, BigNumber>>::iterator second_argument_get;
       int number_line = 0;
    };
 
@@ -195,7 +194,7 @@ class TableToken
 
    map<string, TokenType> table_operations
    {
-      {";", TokenType::EMPTY_OPERATOR},       {"=", TokenType::ASSIGNMENT_OPERATOR},  {",", TokenType::COMMA},
+      {";", TokenType::EMPTY_OPERATOR},       {"=", TokenType::ASSIGNMENT_OPERATOR},
       {"+", TokenType::ARITHMETIC_OPERATION}, {"-", TokenType::ARITHMETIC_OPERATION}, {"*", TokenType::ARITHMETIC_OPERATION},
       {"/", TokenType::ARITHMETIC_OPERATION}, {"%", TokenType::ARITHMETIC_OPERATION}, {"(", TokenType::O_BRACE}, 
       {")", TokenType::C_BRACE},              {"<", TokenType::RELATION},             {">", TokenType::RELATION}, 
@@ -276,7 +275,7 @@ class TableToken
    {
       Token result;
 
-      if (register_type_token >= 2)
+      if (register_type_token >= 3)
          result.value = value_;
       else if (register_indicator.index() == 1)
       {
@@ -286,6 +285,7 @@ class TableToken
       {
          result.value = get<0>(register_indicator);
       }
+
       result.token_class = register_type_token;
       result.number_line = number_line;
 
@@ -447,6 +447,8 @@ class TableToken
 
    bool Is_this_o_mark(string a)
    {
+      if (a.size() < 2)
+         return false;
       if (a[0] == a[1] && a[0] == '<')
          return true;
       return false;
@@ -507,6 +509,11 @@ class TableToken
       else if (character == ';')
       {
          result.token_class = SymbolicTokenType::SEMI_COLON;
+         result.value = (int)character;
+      }
+      else if (character == ',')
+      {
+         result.token_class = SymbolicTokenType::COMMA;
          result.value = (int)character;
       }
       else if (character == '\n')
@@ -610,6 +617,16 @@ public:
 
          if (flag_get)
          {
+            if (prev_character != O_BRACE_S)
+            {
+               Error_Handler("The function argument is missing");
+               flag_get = false;
+               continue;
+            }
+            accumulation_of_value.clear();
+
+         if (flag_get)
+         {
             ;
          }
 
@@ -704,6 +721,9 @@ public:
          else if (symbolic_token.token_class == END)
             flag = false;
 
+         if (register_type_token == GET)
+            flag_get = true;
+
          prev_character = symbolic_token.token_class;
          prev_token = register_type_token;
       }
@@ -719,6 +739,18 @@ public:
          cout << TokenTypeString[i.token_class] << " ";
          if (i.token_class >= 7)
             ;//Nothing
+         else if (i.token_class == GET)
+         {
+            if (get<1>(i.value)->index() == 0)
+               cout << get<0>(*(get<1>(i.value))) << " ";
+            else
+               cout << get<1>(*(get<1>(i.value))) << " ";
+
+            if (i.second_argument_get->index() == 0)
+               cout << get<0>(*(i.second_argument_get)) << " ";
+            else
+               cout << get<1>(*(i.second_argument_get)) << " ";
+         }
          else if (i.value.index() == 0)
             cout << get<0>(i.value);
          else if (i.value.index() == 3)
