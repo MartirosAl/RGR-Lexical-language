@@ -27,6 +27,9 @@
     <ClCompile Include="Sintax_Analyzer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Lexical_Analyzer.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Iterator.h">
@@ -36,9 +39,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="BigNumber.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Translator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,6 +53,9 @@
       <Filter>Файлы ресурсов</Filter>
     </Text>
     <Text Include="Test5.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Grammar.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
   </ItemGroup>
