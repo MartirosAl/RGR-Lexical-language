@@ -4,13 +4,11 @@
 <ads> -> [V] as <TYPE> , <ads>
 <ads> -> [V] as <TYPE>
 <Program> -> <Operation> <Program>
-<Program> -> <Operation>
 <Operation> -> ;
 <Operation> -> <Assignment>
 <Operation> -> <while>
 <Operation> -> <for>
 <Operation> -> <if>
-<Operation> -> <ifelse>
 <Operation> -> <input>
 <Operation> -> <print>
 <Operation> -> <label>

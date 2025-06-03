@@ -1,70 +1,117 @@
 #pragma once
+#include <iostream>
+using namespace std; 
 #include <list>
 #include <unordered_map>
+#include <algorithm>
 #include "Lexical_Analyzer.h"
 
+// Класс Sintax реализует синтаксический анализатор на основе лексического анализатора
 class Sintax : protected TableToken
 {
 public:
+	// Конструктор, принимает имя файла с грамматикой
 	Sintax(string file_name);
 
+	// Выводит все правила грамматики
 	void Print_Rules();
 
+	// Выводит список всех нетерминалов
 	void Print_Nonterminals();
 
+	// Выводит список всех терминалов
 	void Print_Terminals();
 
 protected:
-	map <string, list<list<string>>> map_rules;
+	// Карта: нетерминал -> список правил (каждое правило — список строк)
+	map <string, vector<vector<string>>> map_rules;
 
+	// Список нетерминалов грамматики
+	vector<string> nonterminals;
 
-	list<string> nonterminals;
-	list<string> terminals;
+	// Список терминалов грамматики
+	vector<string> terminals;
 
+	// Читает правила из файла и заполняет map_rules, nonterminals, terminals
 	void Rule_to_code(fstream& file);
 
+	// Удаляет дубликаты eps в map_rules
+	void Remove_Duplicate_Eps();
+
+	// Сообщает об ошибке в правиле и завершает выполнение
 	void Rule_Error(string error_text, fstream& file);
 
+	// Сообщает об ошибке и завершает выполнение
 	void Error(string error_text);
 
+	// Находит все нетерминалы в файле
 	void Find_Nonterminals(fstream& file);
 
+	// Создаёт вспомогательные таблицы для синтаксического анализа
 	void Create_Tables();
 
-	list<list<string>> FIRST(int k, string nonterminal);
+	// Вычисляет множество FIRST для нетерминала (или терминала)
+	vector<vector<string>> FIRST_One(string nonterminal, set<string> visited);
 
-	list<list<string>> Cartesian_Product(list<list<string>> to, list<list<string>> from);
+	// Вычисляет множество FIRST для следующего элемента после текущего в правиле
+	vector<vector<string>> FIRST_One_for_next(vector<string>::iterator t, const vector<string>& r);
 
-	list<list<string>> Clipping(int n, list<list<string>> from);
+	void Print_Firsts(vector<vector<vector<string>>> f);
 
+	// Декартово произведение двух списков списков строк
+	vector<vector<string>> Cartesian_Product(vector<vector<string>> to, vector<vector<string>> from);
+
+	// Обрезает каждый список в from до длины n
+	vector<vector<string>> Clipping(int n, vector<vector<string>> from);
+
+	// Проверяет, является ли строка нетерминалом
 	bool IsNonterminal(string s);
 
+	// Проверяет, является ли строка терминалом
 	bool IsTerminal(string s);
 
+	// Проверяет, является ли строка ключевым словом
 	bool IsKeyword(string s);
 
+	// Список ключевых слов грамматики
 	const vector<string> Keywords
 	{
 		"[eps]", "[V]", "[C]", "[rel]", "[rem]", "[L]"
 	};
 
+	// Структура для хранения элемента канонической таблицы LR-анализатора
 	struct canonical_table
 	{
-		string nonterminal;
-		int dot;
-		list<string> rule;
-		list<string> following;
+		string nonterminal;    // Нетерминал
+		int dot;               // Позиция точки в правиле
+		vector<string> rule;     // Правило (список символов)
+		vector<string> following;// Множество следующих символов (lookahead)
+		int number_table;		 // Номер таблицы в которой она находится
 	};
 
-	list<list<canonical_table>> canonical_table_system;
+	// Система канонических таблиц для синтаксического анализа
+	vector<vector<canonical_table>> canonical_table_system;
 
+	// Структура для хранения информации о переходах (goto)
 	struct for_goto
 	{
-		string nonterminal;
-		string next_dot;
+		int number_table; // Номер таблицы откуда этот символ
+		string symbol;    // Символ для переноса
+
+		bool operator==(const for_goto& other) const 
+		{
+			return number_table == other.number_table && symbol == other.symbol;
+		}
 	};
 
-	list<canonical_table> Start_Table(string start_nonterminal, list<list<list<string>>> Firsts);
+	// Формирует стартовую таблицу для синтаксического анализа
+	vector<canonical_table> Start_Table(string start_nonterminal);
 
+	vector<Sintax::for_goto> Find_All_Goto(const vector<canonical_table>& can_t);
 
+	Sintax::for_goto Find_One_Goto(const canonical_table& can_t);
+
+	void Print_Canonical_Table(const vector<canonical_table>& can_t);
+
+	vector<canonical_table>GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table);
 };

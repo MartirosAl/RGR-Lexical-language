@@ -142,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Grammar.txt" />
+    <Text Include="Grammar_test1.txt" />
     <Text Include="Test1.txt" />
     <Text Include="Test2.txt" />
     <Text Include="Test3.txt" />

@@ -8,10 +8,11 @@ int main()
    //
    //result.Print_Table_Token();
 
-   Sintax A("Grammar.txt");
-   A.Print_Rules();
-   A.Print_Nonterminals();
-   A.Print_Terminals();
+   Sintax A("Grammar_test1.txt");
+   //A.Print_Rules();
+   //A.Print_Nonterminals();
+   //A.Print_Terminals();
+   
 
    return 0;
 }
