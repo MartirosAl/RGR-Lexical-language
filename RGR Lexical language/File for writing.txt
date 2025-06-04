@@ -1,0 +1,62 @@
+<A> -> declare <D> as <G> ; <A> 
+<A> -> [eps] 
+
+<B> -> <C> <B> 
+<B> -> <C> 
+
+<C> -> ; 
+<C> -> set <H> ; 
+<C> -> while <I> do <B> end; 
+<C> -> [L] 
+<C> -> goto; 
+<C> -> if <I> then <B> <J> end; 
+<C> -> for [V] from <E> until <E> step <E> do <B> end; 
+<C> -> for [V] from <E> until <E> do <B> end; 
+<C> -> on <E> in [ <E> , <E> ] goto; 
+<C> -> cin <K> ; 
+<C> -> cout <M> ; 
+<C> -> exception; 
+<C> -> [rem] 
+
+<D> -> [V] , <D> 
+<D> -> [V] 
+
+<E> -> <E> + <T> 
+<E> -> <E> - <T> 
+<E> -> <T> 
+
+<F> -> ( <E> ) 
+<F> -> C 
+<F> -> [V] 
+<F> -> arg( <E> ) 
+<F> -> abs( <E> ) 
+<F> -> complex( <E> , <E> ) 
+<F> -> re( <E> ) 
+<F> -> im( <E> ) 
+
+<G> -> int 
+<G> -> complex 
+
+<H> -> [V] to <E> , <H> 
+<H> -> [V] to <E> 
+
+<I> -> <E> [rel] <E> 
+
+<J> -> elseif <I> then <B> <J> 
+<J> -> else <B> 
+<J> -> [eps] 
+
+<K> -> >> [V] <K> 
+<K> -> >> [V] 
+
+<M> -> << <E> <M> 
+<M> -> << <E> 
+
+<S> -> <A> <B> 
+
+<T> -> <T> * <F> 
+<T> -> <T> / <F> 
+<T> -> <T> % <F> 
+<T> -> <F> 
+
+

@@ -9,18 +9,61 @@ using namespace std;
 // Класс Sintax реализует синтаксический анализатор на основе лексического анализатора
 class Sintax : protected TableToken
 {
+protected:
+
+	// Список ключевых слов грамматики
+	const vector<string> Keywords
+	{
+		"[eps]", "[V]", "[C]", "[rel]", "[rem]", "[L]"
+	};
+
+	// Структура для хранения элемента канонической таблицы LR-анализатора
+	struct canonical_table
+	{
+		string nonterminal;    // Нетерминал
+		int dot;               // Позиция точки в правиле
+		vector<string> rule;     // Правило (список символов)
+		vector<string> following;// Множество следующих символов (lookahead)
+		int number_table;		 // Номер таблицы в которой она находится
+
+		bool operator==(const canonical_table& other) const
+		{
+			return nonterminal == other.nonterminal && dot == other.dot && rule == other.rule && following == other.following;
+		}
+	};
+
+	// Структура для хранения информации о переходах (goto)
+	struct for_goto
+	{
+		int number_table; // Номер таблицы откуда этот символ
+		string symbol;    // Символ для переноса
+
+		bool operator==(const for_goto& other) const
+		{
+			return number_table == other.number_table && symbol == other.symbol;
+		}
+	};
+
 public:
 	// Конструктор, принимает имя файла с грамматикой
-	Sintax(string file_name);
+	Sintax(string file_name, string start_nonterminal_ = "<S>");
 
 	// Выводит все правила грамматики
 	void Print_Rules();
 
+	void Write_Rules(ofstream& file);
+
+	void Write_Canonical_Table(const vector<canonical_table>& can_t, ofstream& file);
+
 	// Выводит список всех нетерминалов
 	void Print_Nonterminals();
 
+	void Write_Nonterminals(ofstream& file);
+
 	// Выводит список всех терминалов
 	void Print_Terminals();
+
+	void Write_Terminals(ofstream& file);
 
 protected:
 	// Карта: нетерминал -> список правил (каждое правило — список строк)
@@ -48,13 +91,13 @@ protected:
 	void Find_Nonterminals(fstream& file);
 
 	// Создаёт вспомогательные таблицы для синтаксического анализа
-	void Create_Tables();
+	vector<vector<canonical_table>> Create_Tables(string start_nonterminal_ = "<S>");
 
 	// Вычисляет множество FIRST для нетерминала (или терминала)
 	vector<vector<string>> FIRST_One(string nonterminal, set<string> visited);
 
 	// Вычисляет множество FIRST для следующего элемента после текущего в правиле
-	vector<vector<string>> FIRST_One_for_next(vector<string>::iterator t, const vector<string>& r);
+	vector<vector<string>> FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r);
 
 	void Print_Firsts(vector<vector<vector<string>>> f);
 
@@ -73,36 +116,12 @@ protected:
 	// Проверяет, является ли строка ключевым словом
 	bool IsKeyword(string s);
 
-	// Список ключевых слов грамматики
-	const vector<string> Keywords
-	{
-		"[eps]", "[V]", "[C]", "[rel]", "[rem]", "[L]"
-	};
 
-	// Структура для хранения элемента канонической таблицы LR-анализатора
-	struct canonical_table
-	{
-		string nonterminal;    // Нетерминал
-		int dot;               // Позиция точки в правиле
-		vector<string> rule;     // Правило (список символов)
-		vector<string> following;// Множество следующих символов (lookahead)
-		int number_table;		 // Номер таблицы в которой она находится
-	};
 
 	// Система канонических таблиц для синтаксического анализа
 	vector<vector<canonical_table>> canonical_table_system;
 
-	// Структура для хранения информации о переходах (goto)
-	struct for_goto
-	{
-		int number_table; // Номер таблицы откуда этот символ
-		string symbol;    // Символ для переноса
 
-		bool operator==(const for_goto& other) const 
-		{
-			return number_table == other.number_table && symbol == other.symbol;
-		}
-	};
 
 	// Формирует стартовую таблицу для синтаксического анализа
 	vector<canonical_table> Start_Table(string start_nonterminal);

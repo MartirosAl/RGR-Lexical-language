@@ -1,8 +1,16 @@
 #include "Sintax_Analyzer.h"
 
 // Конструктор класса Sintax
-Sintax::Sintax(string file_name)
+Sintax::Sintax(string file_name, string start_nonterminal_)
 {
+	ofstream File_for_writing("File for writing.txt");
+	if (!File_for_writing.is_open())
+	{
+		cerr << "Error opening file: " << file_name << endl;
+		return;
+	}
+	File_for_writing.clear();
+
 	fstream file(file_name);
 	if (!file.is_open())
 	{
@@ -26,12 +34,27 @@ Sintax::Sintax(string file_name)
 		}
 		cout << endl;
 	}
+	Write_Rules(File_for_writing);
+	File_for_writing << endl;
 
-	Print_Nonterminals();
-	Print_Terminals();
-
+	vector<vector<canonical_table>> tables;
 	// Создание вспомогательных таблиц для синтаксического анализа
-	Create_Tables();
+	tables = Create_Tables(start_nonterminal_);
+
+	Write_Nonterminals(File_for_writing);
+	File_for_writing << endl;
+
+	Write_Terminals(File_for_writing);
+	File_for_writing << endl;
+
+	for (auto& i : tables)
+	{
+		Write_Canonical_Table(i, File_for_writing);
+	}
+	File_for_writing << endl;
+
+	File_for_writing.close();
+	file.close();
 }
 
 // Преобразует правила из файла в структуру map_rules
@@ -105,7 +128,7 @@ void Sintax::Rule_to_code(fstream& file)
 			else
 				map_rules[key].push_back(rule);
 
-			if (find(terminals.begin(), terminals.end(), word) == terminals.end())
+			if (!word.empty() && find(terminals.begin(), terminals.end(), word) == terminals.end())
 				terminals.push_back(word);
 			word.clear();
 			rule.clear();
@@ -164,13 +187,16 @@ void Sintax::Rule_to_code(fstream& file)
 		// Обработка конца файла
 		if (file.peek() == EOF)
 		{
-			rule.push_back(word);
+			if (!word.empty())
+			{
+				rule.push_back(word);
+			}
 			if (map_rules.find(key) == map_rules.end())
 				map_rules[key] = { rule };
 			else
 				map_rules[key].push_back(rule);
 
-			if (find(terminals.begin(), terminals.end(), word) == terminals.end())
+			if (!word.empty() && find(terminals.begin(), terminals.end(), word) == terminals.end())
 				terminals.push_back(word);
 			word.clear();
 			rule.clear();
@@ -250,18 +276,9 @@ void Sintax::Find_Nonterminals(fstream& file)
 }
 
 // Создание вспомогательных таблиц для синтаксического анализа
-void Sintax::Create_Tables()
+vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonterminal_)
 {
-	vector<vector<vector<string>>> Firsts;
-	// Для каждого нетерминала вычисляем множество FIRST
-	for (auto i = nonterminals.begin(); i != nonterminals.end(); i++)
-	{
-		Firsts.push_back(FIRST_One((*i), { }));
-	}
-
-	Print_Firsts(Firsts);
-
-	string start_nonterminal = "<S>"; // Начальный нетерминал грамматики
+	string start_nonterminal = start_nonterminal_; // Начальный нетерминал грамматики
 
 	// Проверка наличия стартового нетерминала
 	while (find(nonterminals.begin(), nonterminals.end(), start_nonterminal) == nonterminals.end())
@@ -270,53 +287,100 @@ void Sintax::Create_Tables()
 		cin >> start_nonterminal;
 	}
 
-	vector<canonical_table> table;
+	vector<vector<canonical_table>> table;
 	vector<canonical_table> start_table;
 	list<for_goto> table_goto_args;
 
 	// Формирование стартовой таблицы
 	start_table = Start_Table(start_nonterminal);
 
-	Print_Canonical_Table(start_table);
-
-	table = start_table;
+	table.push_back(start_table);
 
 	// Поиск всех нетерминалов, следующих за точкой в стартовой таблице
-	for (auto& i : Find_All_Goto(table))
+	for (auto& i : Find_All_Goto(*table.begin()))
 	{
-		if (table_goto_args.empty() || find(table_goto_args.begin(), table_goto_args.end(), i) == table_goto_args.end())
+		if (find(table_goto_args.begin(), table_goto_args.end(), i) == table_goto_args.end())
 		{
 			table_goto_args.push_back(i);
-			cout << "Find goto: " << i.number_table << " " << i.symbol << endl;
+			//cout << "Find goto: " << i.number_table << " " << i.symbol << endl;
 		}
 	}
 
 	int counter = 0;
 	for (auto& i : table_goto_args)
 	{
-		counter++;
-		cout << "GOTO(" << i.number_table << ", " << i.symbol << ") = { ";
-		vector<canonical_table> result = GOTO(i, table, i.number_table);
-		for (auto& j : result)
+
+		vector<canonical_table> temp;
+		for (auto& j : table)
 		{
-			cout << "[" << j.nonterminal << " -> ";
-			int rule_counter = 0;
-			for (auto& k : j.rule)
+			for (auto& t : j)
 			{
-				if (rule_counter++ == j.dot)
-					cout << ". ";
-				cout << k << " ";
+				if (t.number_table == i.number_table)
+					temp.push_back(t);
 			}
-			cout << "] ";
 		}
-		cout << "}" << endl;
+		
+		cout << "GOTO(" << i.number_table << ", " << i.symbol << ") = ";
+		vector<canonical_table> res = GOTO(i, temp, i.number_table);
+
+		// Удаление дубликатов из res
+		std::vector<canonical_table> unique_res;
+		for (const auto& elem : res) {
+			if (find(unique_res.begin(), unique_res.end(), elem) == unique_res.end())
+				unique_res.push_back(elem);
+		}
+		res = move(unique_res);
+
+		for (int j = res.size() - 1; j > 0; j--)
+		{
+			bool swapped = false;
+
+			for (int k = 0; k < j; k++)
+			{
+				if (res[k].nonterminal > res[k + 1].nonterminal || res[k].nonterminal == res[k + 1].nonterminal && res[k].rule > res[k + 1].rule)
+				{
+					swap(res[k], res[k + 1]);
+					swapped = true;
+				}
+			}
+
+			if (swapped == false)
+				break;
+		}
+
+		if (find(table.begin(), table.end(), res) != table.end())
+		{
+			cout << "A" << (*(*find(table.begin(), table.end(), res)).begin()).number_table << endl;
+			continue;
+		}
+		counter++;
+
+		for (auto& j : res)
+		{
+			j.number_table = counter;
+		}
+
+		table.push_back(res);
+
+
+		// Высчитываение аргументов goto для последующих таблиц 
+		list<canonical_table> result_list(res.begin(), res.end());
+		for (auto& j : result_list)
+		{
+			j.number_table = counter;
+			if (j.rule.size() > j.dot)
+			{
+				if (find(table_goto_args.begin(), table_goto_args.end(), for_goto(j.number_table, j.rule[j.dot])) == table_goto_args.end())
+				{
+					table_goto_args.push_back(for_goto(j.number_table, j.rule[j.dot]));
+					//cout << "Added goto: " << j.number_table << " " << j.rule[j.dot] << endl;
+				}
+			}
+			
+		}
 	}
 
-	
-
-	
-
-
+	return table;
 }
 
 // Вычисление множества FIRST для нетерминала
@@ -385,13 +449,14 @@ vector<vector<string>> Sintax::FIRST_One(string nonterminal, set<string> visited
 }
 
 // Вычисляет множество FIRST для элементов, следующих за позицией t в правиле r
-vector<vector<string>> Sintax::FIRST_One_for_next(vector<string>::iterator t, const vector<string>& r)
+vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r)
 {
 	if (r.size() == 0)
 		return {};
 	vector<vector<string>> result;
 	vector<string> prefix;
 
+	auto t = it; // Создаём итератор для обхода
 	++t; // Переходим к следующему элементу после t
 
 	// Если достигли конца правила — возвращаем эпсилон
@@ -575,6 +640,24 @@ vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 	{
 		res.push_back(i);
 	}
+
+	for (int j = res.size() - 1; j > 0; j--)
+	{
+		bool swapped = false;
+
+		for (int k = 0; k < j; k++)
+		{
+			if (res[k].nonterminal > res[k + 1].nonterminal || res[k].nonterminal == res[k + 1].nonterminal && res[k].rule > res[k + 1].rule)
+			{
+				swap(res[k], res[k + 1]);
+				swapped = true;
+			}
+		}
+
+		if (swapped == false)
+			break;
+	}
+
 	return res;
 }
 
@@ -593,7 +676,7 @@ vector<Sintax::for_goto> Sintax::Find_All_Goto(const vector<canonical_table>& ca
 
 Sintax::for_goto Sintax::Find_One_Goto(const canonical_table& can_t)
 {
-	if (can_t.rule.size() < can_t.dot)
+	if (can_t.rule.size() > can_t.dot)
 		return (for_goto(can_t.number_table, can_t.rule[can_t.dot]));
 	return for_goto(-1, " ");
 }
@@ -617,6 +700,8 @@ void Sintax::Print_Canonical_Table(const vector<canonical_table>& can_t)
 				cout << ". ";
 			cout << j << " ";
 		}
+		if (counter == i.dot)
+			cout << ". ";
 		cout << ", ";
 		for (auto& j : i.following)
 		{
@@ -626,25 +711,101 @@ void Sintax::Print_Canonical_Table(const vector<canonical_table>& can_t)
 		}
 		cout << "]" << endl;
 	}
-	cout << "}" << endl;
+	cout << "}" << endl << endl;
 }
 
-vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table)
+void Sintax::Write_Canonical_Table(const vector<canonical_table>& can_t, ofstream& file)
 {
+	int prev_number = -1;
 	for (auto& i : can_t)
 	{
-		if (i.number_table != number_table)
-			continue; // Если номер таблицы не совпадает, пропускаем
-		if (i.rule.size() <= i.dot)
-			continue; // Если точка в конце правила, пропускаем
-		if (i.rule[i.dot] == args.symbol) // Если следующий символ совпадает с искомым нетерминалом
+		if (prev_number != i.number_table)
 		{
-			vector<canonical_table> res;
-			res.push_back(i); // Добавляем текущую структуру в результат
-			return res; // Возвращаем найденные структуры
+			file << "A" << i.number_table << " = {" << endl;
+			prev_number = i.number_table;
+		}
+
+		file << "[" << i.nonterminal << " -> ";
+		int counter = 0;
+		for (auto& j : i.rule)
+		{
+			if (counter++ == i.dot)
+				file << ". ";
+			file << j << " ";
+		}
+		if (counter == i.dot)
+			file << ". ";
+		file << ", ";
+		for (auto& j : i.following)
+		{
+			if (j != *i.following.begin())
+				file << " | ";
+			file << j;
+		}
+		file << "]" << endl;
+	}
+	file << "}" << endl << endl;
+}
+
+// Реализация функции GOTO для LR(1)-анализатора
+vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table)
+{
+	// Множество уникальных ситуаций
+	std::vector<canonical_table> res;
+
+	// Очередь для обработки новых ситуаций
+	std::list<canonical_table> queue;
+
+	// 1. Сдвигаем точку вправо для всех ситуаций, где после точки стоит args.symbol
+	for (const auto& i : can_t)
+	{
+		if (i.number_table != number_table)
+			continue;
+		if (i.rule.size() <= i.dot)
+			continue;
+		if (i.rule[i.dot] == args.symbol)
+		{
+			canonical_table new_item(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
+			if (std::find(res.begin(), res.end(), new_item) == res.end()) {
+				res.push_back(new_item);
+				queue.push_back(new_item);
+			}
 		}
 	}
-	return {}; // Если ничего не найдено, возвращаем пустой вектор
+
+	// 2. closure: обрабатываем только новые ситуации из очереди
+	while (!queue.empty())
+	{
+		auto it = queue.front();
+		queue.pop_front();
+
+		if (it.rule.size() > it.dot && IsNonterminal(it.rule[it.dot]))
+		{
+			string B = it.rule[it.dot];
+			for (const auto& rule : map_rules[B])
+			{
+				for (const auto& lookahead : it.following)
+				{
+					auto firsts = FIRST_One_for_next(it.rule.begin() + it.dot, it.rule);
+					std::set<std::string> first_beta;
+					for (const auto& f : firsts)
+						for (const auto& s : f)
+							first_beta.insert(s);
+
+					for (const auto& f : first_beta)
+					{
+						canonical_table new_item(B, 0, rule, {f}, it.number_table);
+						if (std::find(res.begin(), res.end(), new_item) == res.end()) {
+							res.push_back(new_item);
+							queue.push_back(new_item); // только новые!
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 // Печать всех правил грамматики
@@ -665,6 +826,24 @@ void Sintax::Print_Rules()
 	}
 }
 
+// Печать всех правил грамматики
+void Sintax::Write_Rules(ofstream& file)
+{
+	for (auto it = map_rules.begin(); it != map_rules.end(); it++)
+	{
+		for (const auto& rule : it->second)
+		{
+			file << it->first << " -> ";
+			for (const auto& word : rule)
+			{
+				file << word << " ";
+			}
+			file << endl;
+		}
+		file << endl;
+	}
+}
+
 // Печать всех нетерминалов
 void Sintax::Print_Nonterminals()
 {
@@ -676,6 +855,17 @@ void Sintax::Print_Nonterminals()
 	cout << endl;
 }
 
+// Печать всех нетерминалов
+void Sintax::Write_Nonterminals(ofstream& file)
+{
+	file << "Nonterminals: ";
+	for (const auto& nonterminal : nonterminals)
+	{
+		file << nonterminal << " ";
+	}
+	file << endl;
+}
+
 // Печать всех терминалов
 void Sintax::Print_Terminals()
 {
@@ -685,4 +875,15 @@ void Sintax::Print_Terminals()
 		cout << terminal << " ";
 	}
 	cout << endl;
+}
+
+// Печать всех терминалов
+void Sintax::Write_Terminals(ofstream& file)
+{
+	file << "Terminals: ";
+	for (const auto& terminal : terminals)
+	{
+		file << terminal << " ";
+	}
+	file << endl;
 }

@@ -61,6 +61,12 @@
     <Text Include="Grammar_test1.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="File for writing.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="Grammar_test2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Test4.txt">
