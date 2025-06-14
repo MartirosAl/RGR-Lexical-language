@@ -1,0 +1,47 @@
+<S> -> <A> <B>
+<B> -> <C> <B>
+<B> -> <C>
+<A> -> [declare] <D> [as] <G> [;] <A>
+<A> -> [eps]
+<D> -> [V] [,] <D>
+<D> -> [V]
+<G> -> [int]
+<G> -> [complex]
+<C> -> [;]
+<C> -> [set] <H> [;]
+<H> -> [V] [to] <E> [,] <H>
+<H> -> [V] [to] <E>
+<C> -> [while] <I> [do] <B> [end] [;]
+<C> -> [L]
+<C> -> [goto] [;]
+<C> -> [if] <I> [then] <B> <J> [end] [;]
+<J> -> [elseif] <I> [then] <B> <J>
+<J> -> [else] <B>
+<J> -> [eps]
+<C> -> [for] [V] [from] <E> [until] <E> [step] <E> [do] <B> [end] [;]
+<C> -> [for] [V] [from] <E> [until] <E> [do] <B> [end] [;]
+<C> -> [on] <E> [in] [(] <E> [,] <E> [)] [goto] [;]
+<C> -> [cin] <K> [;]
+<K> -> [>>] [V] <K>
+<K> -> [>>] [V]
+<C> -> [cout] <M> [;]
+<M> -> [<<] <E> <M>
+<M> -> [<<] <E>
+<C> -> [exception] [;]
+<C> -> [rem]
+<E> -> <E> [+] <T>
+<E> -> <E> [-] <T>
+<E> -> <T>
+<T> -> <T> [*] <F>
+<T> -> <T> [/] <F>
+<T> -> <T> [%] <F>
+<T> -> <F>
+<F> -> [(] <E> [)]
+<F> -> [C]
+<F> -> [V]
+<F> -> [arg] [(] <E> [)]
+<F> -> [abs] [(] <E> [)]
+<F> -> [complex] [(] <E> [,] <E> [)]
+<F> -> [re] [(] <E> [)]
+<F> -> [im] [(] <E> [)]
+<I> -> <E> [rel] <E>

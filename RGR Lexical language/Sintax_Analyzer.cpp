@@ -21,19 +21,7 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 	// Преобразование правил грамматики в структуру кода
 	Rule_to_code(file);
 
-	for (auto& [key, value] : map_rules)
-	{
-		cout << key << " -> ";
-		for (const auto& rule : value)
-		{
-			for (const auto& word : rule)
-			{
-				cout << word << " ";
-			}
-			cout << "| ";
-		}
-		cout << endl;
-	}
+	//Print_Rules();
 	Write_Rules(File_for_writing);
 	File_for_writing << endl;
 
@@ -283,7 +271,7 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 	// Проверка наличия стартового нетерминала
 	while (find(nonterminals.begin(), nonterminals.end(), start_nonterminal) == nonterminals.end())
 	{
-		cout << "Enter the starting nonterminal";
+		cout << "Enter the starting nonterminal" << endl << "-> ";
 		cin >> start_nonterminal;
 	}
 
@@ -320,7 +308,6 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 			}
 		}
 		
-		cout << "GOTO(" << i.number_table << ", " << i.symbol << ") = ";
 		vector<canonical_table> res = GOTO(i, temp, i.number_table);
 
 		// Удаление дубликатов из res
@@ -348,9 +335,13 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 				break;
 		}
 
-		if (find(table.begin(), table.end(), res) != table.end())
+		!!Что-то происходит с таблицами и не позволяет проходить дальше. Нужно проверить куда пропадают таблицы. Есть предположение, что это происходит из-за 
+			недостаточной проверки таблиц на вхождение их в изначальную таблицу
+		auto find_a = find(table.begin(), table.end(), res);
+
+		if (find_a != table.end())
 		{
-			cout << "A" << (*(*find(table.begin(), table.end(), res)).begin()).number_table << endl;
+			Print_Canonical_Table(*find_a);
 			continue;
 		}
 		counter++;
@@ -379,6 +370,8 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 			
 		}
 	}
+
+	//Print_GO_TO_args(table_goto_args);
 
 	return table;
 }
@@ -417,13 +410,17 @@ vector<vector<string>> Sintax::FIRST_One(string nonterminal, set<string> visited
 				// Передаём visited дальше!
 				vector<vector<string>> temp = FIRST_One(*j, visited);
 				vector<vector<string>> temp2;
-				for (int i = 0; i < temp.size(); i++)
-					temp2.push_back(words);
 
-				if (res.empty())
-					res = Cartesian_Product(temp2, temp);
-				else
-					res = Cartesian_Product(res, Cartesian_Product(temp2, temp));
+				if (!words.empty())
+					for (int i = 0; i < temp.size(); i++)
+						temp2.push_back(words);
+
+
+				if (!temp2.empty())
+					temp = Cartesian_Product(temp, temp2);
+
+				res = Cartesian_Product(res, temp);
+
 				words.clear();
 				break;
 			}
@@ -570,10 +567,11 @@ vector<vector<string>> Sintax::Clipping(int n, vector<vector<string>> from)
 bool Sintax::IsNonterminal(string s)
 {
 	if (s[0] == '<' && s[s.size() - 1] == '>')
-		if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
-			return true;
-		else
-			Error("Missing nonterminal");
+		return true;
+		//if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
+		//	return true;
+		//else
+		//	Error("Missing nonterminal");
 	else
 		if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
 			Error("Incorrect nonterminal");
@@ -584,10 +582,11 @@ bool Sintax::IsNonterminal(string s)
 bool Sintax::IsTerminal(string s)
 {
 	if (!IsNonterminal(s))
-		if (find(terminals.begin(), terminals.end(), s) != terminals.end())
-			return true;
-		else
-			Error("Missing terminal");
+		return true;
+		//if (find(terminals.begin(), terminals.end(), s) != terminals.end())
+		//	return true;
+		//else
+		//	Error("Missing terminal");
 	else
 		if (find(terminals.begin(), terminals.end(), s) != terminals.end())
 			Error("Incorrect terminal");
@@ -598,10 +597,11 @@ bool Sintax::IsTerminal(string s)
 bool Sintax::IsKeyword(string s)
 {
 	if (s[0] == '[' && s[s.size() - 1] == ']')
-		if (find(Keywords.begin(), Keywords.end(), s) != Keywords.end())
+		return true;
+		/*if (find(Keywords.begin(), Keywords.end(), s) != Keywords.end())
 			return true;
 		else
-			Error("Missing keyword");
+			Error("Missing keyword");*/
 	else
 		if (find(Keywords.begin(), Keywords.end(), s) != Keywords.end())
 			Error("Incorrect keyword");
@@ -886,4 +886,20 @@ void Sintax::Write_Terminals(ofstream& file)
 		file << terminal << " ";
 	}
 	file << endl;
+}
+
+void Sintax::Print_GO_TO_args(list<for_goto> go_to_args)
+{
+	for (auto& i : go_to_args)
+	{
+		cout << "(" << i.number_table << " " << i.symbol << ")" << endl;
+	}
+}
+
+void Sintax::Write_GO_TO_args(list<for_goto> go_to_args, ofstream& file)
+{
+	for (auto& i : go_to_args)
+	{
+		file << "(" << i.number_table << " " << i.symbol << ")" << endl;
+	}
 }

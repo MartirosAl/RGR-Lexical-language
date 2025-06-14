@@ -20,7 +20,7 @@
 <J> -> [eps]
 <C> -> for [V] from <E> until <E> step <E> do <B> end ;
 <C> -> for [V] from <E> until <E> do <B> end ;
-<C> -> on <E> in [ <E> , <E> ] goto ;
+<C> -> on <E> in ( <E> , <E> ) goto ;
 <C> -> cin <K> ;
 <K> -> >> [V] <K>
 <K> -> >> [V]

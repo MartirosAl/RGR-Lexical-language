@@ -53,6 +53,8 @@ public:
 
 	void Write_Rules(ofstream& file);
 
+	void Print_Canonical_Table(const vector<canonical_table>& can_t);
+
 	void Write_Canonical_Table(const vector<canonical_table>& can_t, ofstream& file);
 
 	// ¬ыводит список всех нетерминалов
@@ -64,6 +66,10 @@ public:
 	void Print_Terminals();
 
 	void Write_Terminals(ofstream& file);
+
+	void Print_GO_TO_args(list<for_goto> go_to_args);
+
+	void Write_GO_TO_args(list<for_goto> go_to_args, ofstream& file);
 
 protected:
 	//  арта: нетерминал -> список правил (каждое правило Ч список строк)
@@ -129,8 +135,6 @@ protected:
 	vector<Sintax::for_goto> Find_All_Goto(const vector<canonical_table>& can_t);
 
 	Sintax::for_goto Find_One_Goto(const canonical_table& can_t);
-
-	void Print_Canonical_Table(const vector<canonical_table>& can_t);
 
 	vector<canonical_table>GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table);
 };
