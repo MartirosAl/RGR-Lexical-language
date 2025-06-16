@@ -13,14 +13,14 @@
 <H> -> [V] [to] <E>
 <C> -> [while] <I> [do] <B> [end] [;]
 <C> -> [L]
-<C> -> [goto] [;]
+<C> -> [goto] [L] [;]
 <C> -> [if] <I> [then] <B> <J> [end] [;]
 <J> -> [elseif] <I> [then] <B> <J>
 <J> -> [else] <B>
 <J> -> [eps]
 <C> -> [for] [V] [from] <E> [until] <E> [step] <E> [do] <B> [end] [;]
 <C> -> [for] [V] [from] <E> [until] <E> [do] <B> [end] [;]
-<C> -> [on] <E> [in] [(] <E> [,] <E> [)] [goto] [;]
+<C> -> [on] <E> [in] [(] <E> [,] <E> [)] [goto] [L] [;]
 <C> -> [cin] <K> [;]
 <K> -> [>>] [V] <K>
 <K> -> [>>] [V]

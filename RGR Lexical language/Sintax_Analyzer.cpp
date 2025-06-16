@@ -266,6 +266,11 @@ void Sintax::Find_Nonterminals(fstream& file)
 // Создание вспомогательных таблиц для синтаксического анализа
 vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonterminal_)
 {
+
+	ofstream TEST_FILE1("File test1.txt");
+	ofstream TEST_FILE2("File test2.txt");
+	int test_counter = 0;
+
 	string start_nonterminal = start_nonterminal_; // Начальный нетерминал грамматики
 
 	// Проверка наличия стартового нетерминала
@@ -335,15 +340,20 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 				break;
 		}
 
-		!!Что-то происходит с таблицами и не позволяет проходить дальше. Нужно проверить куда пропадают таблицы. Есть предположение, что это происходит из-за 
-			недостаточной проверки таблиц на вхождение их в изначальную таблицу
 		auto find_a = find(table.begin(), table.end(), res);
 
 		if (find_a != table.end())
 		{
-			Print_Canonical_Table(*find_a);
+			TEST_FILE1 << "Count " << test_counter << " | " << counter << endl;
+			TEST_FILE1 << (*res.begin()).number_table << endl;
+			Write_Canonical_Table(*find_a, TEST_FILE1);
+			test_counter++;
 			continue;
 		}
+
+		TEST_FILE2 << "Count " << test_counter << " | " << counter << endl;
+		Write_Canonical_Table(res, TEST_FILE2);
+		test_counter++;
 		counter++;
 
 		for (auto& j : res)
@@ -377,7 +387,7 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 }
 
 // Вычисление множества FIRST для нетерминала
-vector<vector<string>> Sintax::FIRST_One(string nonterminal, set<string> visited)
+vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 {
 	// Если уже были в этом нетерминале на этом пути — предотвращаем зацикливание
 	if (visited.count(nonterminal))
@@ -385,47 +395,39 @@ vector<vector<string>> Sintax::FIRST_One(string nonterminal, set<string> visited
 
 	visited.insert(nonterminal);
 
-	vector<vector<string>> res;
-	vector<string> words;
+	vector<string> res;
+	string words;
 
 	if (map_rules.size() == 0)
 		Error("There are no rules");
 
-	for (auto i = map_rules[nonterminal].begin(); i != map_rules[nonterminal].end(); i++)
+	for (auto& i : map_rules[nonterminal])
 	{
 		words.clear();
-		// Предпологаем, что провторяющееся eps удалены 
-		if ((*i).size() == 1 && (*i)[0] == "[eps]")
+		// Предпологаем, что лишние eps удалены 
+		if (i.size() == 1 && i[0] == "[eps]")
 			res.push_back({ "[eps]" });
-		for (auto j = (*i).begin(); j != (*i).end(); j++)
+		for (auto& j : i)
 		{
-			if (IsTerminal(*j))
+			if (IsTerminal(j))
 			{
-				if ((*j) == "[eps]")
+				if (j == "[eps]")
 					continue;
-				words.push_back(*j);
+				words = j;
 			}
 			else
 			{
 				// Передаём visited дальше!
-				vector<vector<string>> temp = FIRST_One(*j, visited);
-				vector<vector<string>> temp2;
-
-				if (!words.empty())
-					for (int i = 0; i < temp.size(); i++)
-						temp2.push_back(words);
-
-
-				if (!temp2.empty())
-					temp = Cartesian_Product(temp, temp2);
+				vector<string> temp = FIRST_One(j, visited);
 
 				res = Cartesian_Product(res, temp);
+				res = Clipping(1, res);
 
 				words.clear();
 				break;
 			}
 
-			if (words.size() == 1)
+			if (!words.empty())
 			{
 				res.push_back(words);
 				break;
@@ -433,14 +435,8 @@ vector<vector<string>> Sintax::FIRST_One(string nonterminal, set<string> visited
 		}		
 	}
 
-	sort(res.begin(), res.end());
-	res.erase(unique(res.begin(), res.end()), res.end());
-
-	for (auto& i : res)
-	{
-		sort(i.begin(), i.end());
-		i.erase(unique(i.begin(), i.end()), i.end());
-	}
+	// Удаление повторов в res
+	res = Delete_Repetitions(res);
 
 	return res;
 }
@@ -480,7 +476,7 @@ vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_it
 		else
 		{
 			// Для нетерминала вычисляем его FIRST
-			vector<vector<string>> firstSet = FIRST_One(*t, {});
+			vector<vector<string>> firstSet = { FIRST_One(*t, {}) };
 
 			// Для каждого множества из FIRST добавляем к префиксу
 			for (const auto& first : firstSet)
@@ -532,35 +528,45 @@ void Sintax::Print_Firsts(vector<vector<vector<string>>> f)
 }
 
 // Декартово произведение двух списков списков строк
-vector<vector<string>> Sintax::Cartesian_Product(vector<vector<string>> to, vector<vector<string>> from)
+vector<string> Sintax::Cartesian_Product(vector<string> to, vector<string> from)
 {
-	vector<vector<string>> result;
-
+	vector<string> result;
+	if (to.size() == 0)
+	{
+		result = from;
+	}
 	for (const auto& prefix : to)
 	{
 		for (const auto& suffix : from)
 		{
-			vector<string> combined = prefix;
-			combined.insert(combined.end(), suffix.begin(), suffix.end());
-			result.push_back(combined);
+			result.push_back(prefix + suffix);
 		}
 	}
-
 	return result;
 }
 
 // Обрезка списков до длины n
-vector<vector<string>> Sintax::Clipping(int n, vector<vector<string>> from)
+vector<string> Sintax::Clipping(int n, vector<string> from)
 {
-	vector<vector<string>> result;
-
-	for (const auto& i : from)
+	vector<string> result;
+	for (const auto& str : from)
 	{
-		vector<string> cliped = i;
-		cliped.resize(n);
-		result.push_back(cliped);
+		if (str.size() > n)
+			result.push_back(str.substr(0, n));
+		else
+			result.push_back(str);
 	}
 	return result;
+}
+
+vector<string> Sintax::Delete_Repetitions(vector<string> from)
+{
+	std::vector<string> res;
+	for (const auto& elem : from) {
+		if (find(res.begin(), res.end(), elem) == res.end())
+			res.push_back(elem);
+	}
+	return res;
 }
 
 // Проверка, является ли строка нетерминалом

@@ -100,18 +100,20 @@ protected:
 	vector<vector<canonical_table>> Create_Tables(string start_nonterminal_ = "<S>");
 
 	// ¬ычисл€ет множество FIRST дл€ нетерминала (или терминала)
-	vector<vector<string>> FIRST_One(string nonterminal, set<string> visited);
+	vector<string> FIRST_One(string nonterminal, set<string> visited);
 
 	// ¬ычисл€ет множество FIRST дл€ следующего элемента после текущего в правиле
 	vector<vector<string>> FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r);
 
 	void Print_Firsts(vector<vector<vector<string>>> f);
 
-	// ƒекартово произведение двух списков списков строк
-	vector<vector<string>> Cartesian_Product(vector<vector<string>> to, vector<vector<string>> from);
+	// ƒекартово произведение двух списков строк
+	vector<string> Cartesian_Product(vector<string> to, vector<string> from);
 
 	// ќбрезает каждый список в from до длины n
-	vector<vector<string>> Clipping(int n, vector<vector<string>> from);
+	vector<string> Clipping(int n, vector<string> from);
+
+	vector<string> Delete_Repetitions(vector<string> from);
 
 	// ѕровер€ет, €вл€етс€ ли строка нетерминалом
 	bool IsNonterminal(string s);
