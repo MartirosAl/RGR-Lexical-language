@@ -1,10 +1,10 @@
 ﻿<S> -> <Ads> <Program>
-<Ads> -> declare <ads> ; <Ads>
-<Ads> -> declare <ads> ;
-<ads> -> [V] as <TYPE> , <ads>
-<ads> -> [V] as <TYPE>
+<Ads> -> [declare] <ads> [;] <Ads>
+<Ads> -> [declare] <ads> [;]
+<ads> -> [V] [as] <TYPE> [,] <ads>
+<ads> -> [V] [as] <TYPE>
 <Program> -> <Operation> <Program>
-<Operation> -> ;
+<Operation> -> [;]
 <Operation> -> <Assignment>
 <Operation> -> <while>
 <Operation> -> <for>
@@ -16,34 +16,34 @@
 <Operation> -> <select>
 <Operation> -> <exception>
 <Operation> -> <comment>
-<Assignment> -> [V] = <E> ;
-<while> -> while <E> [rel] <E> do <Program> od;
-<for> -> for [V] from <E> to <E> <byE> do <Program> od;
-<byE> -> by <E>
+<Assignment> -> [V] [=] <E> [;]
+<while> -> [while] <E> [rel] <E> [do] <Program> [od] [;]
+<for> -> [for] [V] [from] <E> [to] <E> <byE> [do] <Program> [od] [;]
+<byE> -> [by] <E>
 <byE> -> [eps]
-<if> -> if (<Test>) <Program> else <Program> fi;
-<if> -> if (<Test>) <Program>, fi;
-<input> -> input;
-<print> -> print <E> ;
+<if> -> [if] [(]<Test> [)] <Program> [else] <Program> [fi] [;]
+<if> -> [if] [(] <Test> [)] <Program> [,] [fi] [;]
+<input> -> [input] [;]
+<print> -> [print] <E> [;]
 <label> -> [L]
-<transition> -> goto [L];
-<select> -> select <E> in <case> ni;
-<case> -> case [C]: <Program> <case>
-<case> -> case [C]: <Program>
-<case> -> otherwise: <Program>
-<exception> -> raise;
+<transition> -> [goto] [L] [;]
+<select> -> [select] <E> [in] <case> [ni] [;]
+<case> -> [case] [C] [:] <Program> <case>
+<case> -> [case] [C] [:] <Program>
+<case> -> [otherwise] [:] <Program>
+<exception> -> [raise] [;]
 <comment> -> [rem]
-<E> -> <E> + <T>
-<E> -> <E> - <T>
+<E> -> <E> [+] <T>
+<E> -> <E> [-] <T>
 <E> -> <T>
-<E> -> (<E>)
-<T> -> <T> * <F>
-<T> -> <T> / <F>
-<T> -> <T> % <F>
+<E> -> [(] <E> [)]
+<T> -> <T> [*] <F>
+<T> -> <T> [/] <F>
+<T> -> <T> [%] <F>
 <T> -> <F>
 <F> -> [V]
 <F> -> [C]
-<F> -> get(<E> , <E>)
+<F> -> [get] [(] <E> [,] <E> [)]
 <Test> -> <E> [rel] <E>
-<TYPE> -> int
-<TYPE> -> BigNumber
+<TYPE> -> [int]
+<TYPE> -> [BigNumber]

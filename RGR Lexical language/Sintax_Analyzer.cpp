@@ -837,7 +837,19 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 		// Проверяем, совпадает ли символ после точки с искомым символом
 		if (i.rule[i.dot] == args.symbol)
 		{
-			canonical_table new_item(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
+			// Создаём новый элемент с увеличенным dot
+			canonical_table new_item;
+			
+			//if (i.nonterminal == i.rule[i.dot])
+			//{
+			//	// Если нетерминал совпадает с символом после точки, добавляем [eps] в following
+			//	new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, {"[eps]"}, i.number_table);
+			//}
+			//else
+			//{
+				// Иначе просто увеличиваем dot
+				new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
+			//}
 
 			// Проверяем, не добавлен ли уже этот элемент
 			if (find(res.begin(), res.end(), new_item) == res.end()) 

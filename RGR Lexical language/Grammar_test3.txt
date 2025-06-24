@@ -20,7 +20,7 @@
 <ELSE_IF> -> [eps]
 <STATEMENT> -> [for] [V] [from] <E> [until] <E> [step] <E> [do] <PROGRAM_BODY> [end] [;]
 <STATEMENT> -> [for] [V] [from] <E> [until] <E> [do] <PROGRAM_BODY> [end] [;]
-<STATEMENT> -> [on] <E> [in] [sq(] <E> [,] <E>  [sq)] [goto] [;]
+<STATEMENT> -> [on] <E> [in] [sq(] <E> [,] <E> [sq)] [goto] [;]
 <STATEMENT> -> [cin] <INPUT_LIST> [;]
 <INPUT_LIST> -> [>>] [V] <INPUT_LIST>
 <INPUT_LIST> -> [>>] [V]
