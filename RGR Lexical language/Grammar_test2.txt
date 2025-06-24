@@ -13,20 +13,20 @@
 <H> -> [V] to <E>
 <C> -> while <I> do <B> end ;
 <C> -> [L]
-<C> -> goto [L];
+<C> -> goto ;
 <C> -> if <I> then <B> <J> end ;
 <J> -> elseif <I> then <B> <J>
 <J> -> else <B>
 <J> -> [eps]
 <C> -> for [V] from <E> until <E> step <E> do <B> end ;
 <C> -> for [V] from <E> until <E> do <B> end ;
-<C> -> on <E> in ( <E> , <E> ) goto [L];
+<C> -> on <E> in sq( <E> , <E> sq) goto ;
 <C> -> cin <K> ;
-<K> -> >> [V] <K>
-<K> -> >> [V]
+<K> -> [>>] [V] <K>
+<K> -> [>>] [V]
 <C> -> cout <M> ;
-<M> -> << <E> <M>
-<M> -> << <E>
+<M> -> [<<] <E> <M>
+<M> -> [<<] <E>
 <C> -> exception ;
 <C> -> [rem]
 <E> -> <E> + <T>

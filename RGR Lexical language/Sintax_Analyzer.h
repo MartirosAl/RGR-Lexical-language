@@ -38,9 +38,20 @@ protected:
 		int number_table; // Номер таблицы откуда этот символ
 		string symbol;    // Символ для переноса
 
-		bool operator==(const for_goto& other) const
+		bool operator==(const for_goto& other) const	
 		{
 			return number_table == other.number_table && symbol == other.symbol;
+		}
+	};
+
+	struct auxiliary_table
+	{
+		vector<canonical_table> table;
+		for_goto goto_from;
+
+		bool operator==(const auxiliary_table& other) const
+		{
+			return table == other.table && goto_from == other.goto_from;
 		}
 	};
 
@@ -48,14 +59,19 @@ public:
 	// Конструктор, принимает имя файла с грамматикой
 	Sintax(string file_name, string start_nonterminal_ = "<S>");
 
+	// Деструктор
+	~Sintax();
+
 	// Выводит все правила грамматики
 	void Print_Rules();
 
 	void Write_Rules(ofstream& file);
 
-	void Print_Canonical_Table(const vector<canonical_table>& can_t);
+	//Подразумевается, что у каждой таблицы будет один номер
+	void Print_Small_Table(const auxiliary_table& can_t);
 
-	void Write_Canonical_Table(const vector<canonical_table>& can_t, ofstream& file);
+	//Подразумевается, что у каждой таблицы будет один номер
+	void Write_Small_Table(const auxiliary_table& can_t, ofstream& file);
 
 	// Выводит список всех нетерминалов
 	void Print_Nonterminals();
@@ -71,7 +87,11 @@ public:
 
 	void Write_GO_TO_args(list<for_goto> go_to_args, ofstream& file);
 
+	void Print_Firsts(vector<vector<vector<string>>> f);
+
 protected:
+
+
 	// Карта: нетерминал -> список правил (каждое правило — список строк)
 	map <string, vector<vector<string>>> map_rules;
 
@@ -97,7 +117,7 @@ protected:
 	void Find_Nonterminals(fstream& file);
 
 	// Создаёт вспомогательные таблицы для синтаксического анализа
-	vector<vector<canonical_table>> Create_Tables(string start_nonterminal_ = "<S>");
+	vector<auxiliary_table> Create_Tables(string start_nonterminal_ = "<S>");
 
 	// Вычисляет множество FIRST для нетерминала (или терминала)
 	vector<string> FIRST_One(string nonterminal, set<string> visited);
@@ -105,15 +125,17 @@ protected:
 	// Вычисляет множество FIRST для следующего элемента после текущего в правиле
 	vector<vector<string>> FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r);
 
-	void Print_Firsts(vector<vector<vector<string>>> f);
-
 	// Декартово произведение двух списков строк
 	vector<string> Cartesian_Product(vector<string> to, vector<string> from);
 
 	// Обрезает каждый список в from до длины n
 	vector<string> Clipping(int n, vector<string> from);
 
+	// Удаление повторяющихся слов
 	vector<string> Delete_Repetitions(vector<string> from);
+
+	// Заменяет все eps правила на другие
+	vector<string> Replacing_Eps(vector<string> to, vector<string> from);
 
 	// Проверяет, является ли строка нетерминалом
 	bool IsNonterminal(string s);
@@ -124,14 +146,10 @@ protected:
 	// Проверяет, является ли строка ключевым словом
 	bool IsKeyword(string s);
 
+	// Форматирование таблицы под общий вид
+	vector <canonical_table> Formating_Table(vector<canonical_table>& can_t);
 
-
-	// Система канонических таблиц для синтаксического анализа
-	vector<vector<canonical_table>> canonical_table_system;
-
-
-
-	// Формирует стартовую таблицу для синтаксического анализа
+	// Создает стартовую таблицу для синтаксического анализа
 	vector<canonical_table> Start_Table(string start_nonterminal);
 
 	vector<Sintax::for_goto> Find_All_Goto(const vector<canonical_table>& can_t);

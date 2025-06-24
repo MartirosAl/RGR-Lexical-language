@@ -1,34 +1,34 @@
-<S> -> <A> <B>
-<B> -> <C> <B>
-<B> -> <C>
-<A> -> [declare] <D> [as] <G> [;] <A>
-<A> -> [eps]
-<D> -> [V] [,] <D>
-<D> -> [V]
-<G> -> [int]
-<G> -> [complex]
-<C> -> [;]
-<C> -> [set] <H> [;]
-<H> -> [V] [to] <E> [,] <H>
-<H> -> [V] [to] <E>
-<C> -> [while] <I> [do] <B> [end] [;]
-<C> -> [L]
-<C> -> [goto] [L] [;]
-<C> -> [if] <I> [then] <B> <J> [end] [;]
-<J> -> [elseif] <I> [then] <B> <J>
-<J> -> [else] <B>
-<J> -> [eps]
-<C> -> [for] [V] [from] <E> [until] <E> [step] <E> [do] <B> [end] [;]
-<C> -> [for] [V] [from] <E> [until] <E> [do] <B> [end] [;]
-<C> -> [on] <E> [in] [(] <E> [,] <E> [)] [goto] [L] [;]
-<C> -> [cin] <K> [;]
-<K> -> [>>] [V] <K>
-<K> -> [>>] [V]
-<C> -> [cout] <M> [;]
-<M> -> [<<] <E> <M>
-<M> -> [<<] <E>
-<C> -> [exception] [;]
-<C> -> [rem]
+<PROGRAM> -> <DECLARATIONS> <PROGRAM_BODY>
+<PROGRAM_BODY> -> <STATEMENT> <PROGRAM_BODY>
+<PROGRAM_BODY> -> <STATEMENT>
+<DECLARATIONS> -> [declare] <DECL_LIST> [as] <TYPE> [;] <DECLARATIONS>
+<DECLARATIONS> -> [eps]
+<DECL_LIST> -> [V] [,] <DECL_LIST>
+<DECL_LIST> -> [V]
+<TYPE> -> [int]
+<TYPE> -> [complex]
+<STATEMENT> -> [;]
+<STATEMENT> -> [set] <ASSIGN_LIST> [;]
+<ASSIGN_LIST> -> [V] [to] <E> [,] <ASSIGN_LIST>
+<ASSIGN_LIST> -> [V] [to] <E>
+<STATEMENT> -> [while] <TEST> [do] <PROGRAM_BODY> [end] [;]
+<STATEMENT> -> [L]
+<STATEMENT> -> [goto] [;]
+<STATEMENT> -> [if] <TEST> [then] <PROGRAM_BODY> <ELSE_IF> [end] [;]
+<ELSE_IF> -> [elseif] <TEST> [then] <PROGRAM_BODY> <ELSE_IF>
+<ELSE_IF> -> [else] <PROGRAM_BODY>
+<ELSE_IF> -> [eps]
+<STATEMENT> -> [for] [V] [from] <E> [until] <E> [step] <E> [do] <PROGRAM_BODY> [end] [;]
+<STATEMENT> -> [for] [V] [from] <E> [until] <E> [do] <PROGRAM_BODY> [end] [;]
+<STATEMENT> -> [on] <E> [in] [sq(] <E> [,] <E>  [sq)] [goto] [;]
+<STATEMENT> -> [cin] <INPUT_LIST> [;]
+<INPUT_LIST> -> [>>] [V] <INPUT_LIST>
+<INPUT_LIST> -> [>>] [V]
+<STATEMENT> -> [cout] <OUTPUT_LIST> [;]
+<OUTPUT_LIST> -> [<<] <E> <OUTPUT_LIST>
+<OUTPUT_LIST> -> [<<] <E>
+<STATEMENT> -> [exception] [;]
+<STATEMENT> -> [rem]
 <E> -> <E> [+] <T>
 <E> -> <E> [-] <T>
 <E> -> <T>
@@ -44,4 +44,4 @@
 <F> -> [complex] [(] <E> [,] <E> [)]
 <F> -> [re] [(] <E> [)]
 <F> -> [im] [(] <E> [)]
-<I> -> <E> [rel] <E>
+<TEST> -> <E> [rel] <E>

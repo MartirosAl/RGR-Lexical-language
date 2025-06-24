@@ -1,6 +1,6 @@
-#include "Sintax_Analyzer.h"
+п»ї#include "Sintax_Analyzer.h"
 
-// Конструктор класса Sintax
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєР»Р°СЃСЃР° Sintax
 Sintax::Sintax(string file_name, string start_nonterminal_)
 {
 	ofstream File_for_writing("File for writing.txt");
@@ -18,15 +18,15 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 		return;
 	}
 
-	// Преобразование правил грамматики в структуру кода
+	// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ РїСЂР°РІРёР» РіСЂР°РјРјР°С‚РёРєРё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ РєРѕРґР°
 	Rule_to_code(file);
 
 	//Print_Rules();
 	Write_Rules(File_for_writing);
 	File_for_writing << endl;
 
-	vector<vector<canonical_table>> tables;
-	// Создание вспомогательных таблиц для синтаксического анализа
+	vector<auxiliary_table> tables;
+	// РЎРѕР·РґР°РЅРёРµ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹С… С‚Р°Р±Р»РёС† РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
 	tables = Create_Tables(start_nonterminal_);
 
 	Write_Nonterminals(File_for_writing);
@@ -37,7 +37,7 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 
 	for (auto& i : tables)
 	{
-		Write_Canonical_Table(i, File_for_writing);
+		Write_Small_Table(i, File_for_writing);
 	}
 	File_for_writing << endl;
 
@@ -45,7 +45,14 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 	file.close();
 }
 
-// Преобразует правила из файла в структуру map_rules
+Sintax::~Sintax()
+{
+	map_rules.clear();
+	nonterminals.clear();
+	terminals.clear();
+}
+
+// РџСЂРµРѕР±СЂР°Р·СѓРµС‚ РїСЂР°РІРёР»Р° РёР· С„Р°Р№Р»Р° РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ map_rules
 void Sintax::Rule_to_code(fstream& file)
 {
 	string word;
@@ -55,10 +62,10 @@ void Sintax::Rule_to_code(fstream& file)
 	int number_string = 0;
 	bool nonterminal_flag = 1;
 
-	// Основной цикл по символам файла
+	// РћСЃРЅРѕРІРЅРѕР№ С†РёРєР» РїРѕ СЃРёРјРІРѕР»Р°Рј С„Р°Р№Р»Р°
 	while (file.peek() != EOF)
 	{
-		// Поиск нетерминала в начале правила
+		// РџРѕРёСЃРє РЅРµС‚РµСЂРјРёРЅР°Р»Р° РІ РЅР°С‡Р°Р»Рµ РїСЂР°РІРёР»Р°
 		if (nonterminal_flag)
 		{
 			while (file.peek() != '<' && file.peek() != '\n' && file.peek() != EOF)
@@ -68,20 +75,20 @@ void Sintax::Rule_to_code(fstream& file)
 			}
 			if (file.peek() == '<')
 			{
-				// Считываем нетерминал
+				// РЎС‡РёС‚С‹РІР°РµРј РЅРµС‚РµСЂРјРёРЅР°Р»
 				while (file.peek() != '>')
 				{
 					word += file.get();
 				}
-				word += file.get(); // захватываем '>'
+				word += file.get(); // Р·Р°С…РІР°С‚С‹РІР°РµРј '>'
 				while (file.peek() == ' ')
 					file.get();
 
-				// Проверяем наличие '->' после нетерминала
+				// РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ '->' РїРѕСЃР»Рµ РЅРµС‚РµСЂРјРёРЅР°Р»Р°
 				if (file.get() == '-' && file.get() == '>')
 				{
 					nonterminal_flag = 0;
-					key = word; // первый считанный нетерминал — ключ
+					key = word; // РїРµСЂРІС‹Р№ СЃС‡РёС‚Р°РЅРЅС‹Р№ РЅРµС‚РµСЂРјРёРЅР°Р» вЂ” РєР»СЋС‡
 					if (find(nonterminals.begin(), nonterminals.end(), key) == nonterminals.end())
 					{
 						nonterminals.push_back(key);
@@ -101,7 +108,7 @@ void Sintax::Rule_to_code(fstream& file)
 			}
 		}
 
-		// Обработка различных символов в правиле
+		// РћР±СЂР°Р±РѕС‚РєР° СЂР°Р·Р»РёС‡РЅС‹С… СЃРёРјРІРѕР»РѕРІ РІ РїСЂР°РІРёР»Рµ
 		switch (file.peek())
 		{
 		case '\n':
@@ -120,7 +127,7 @@ void Sintax::Rule_to_code(fstream& file)
 				terminals.push_back(word);
 			word.clear();
 			rule.clear();
-			nonterminal_flag = 1; // сброс флага для следующего правила
+			nonterminal_flag = 1; // СЃР±СЂРѕСЃ С„Р»Р°РіР° РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ РїСЂР°РІРёР»Р°
 			break;
 
 		case ' ':
@@ -129,7 +136,7 @@ void Sintax::Rule_to_code(fstream& file)
 			break;
 
 		case '[':
-			// Обработка терминала в квадратных скобках
+			// РћР±СЂР°Р±РѕС‚РєР° С‚РµСЂРјРёРЅР°Р»Р° РІ РєРІР°РґСЂР°С‚РЅС‹С… СЃРєРѕР±РєР°С…
 			if (!word.empty())
 			{
 				rule.push_back(word);
@@ -141,7 +148,7 @@ void Sintax::Rule_to_code(fstream& file)
 			{
 				word += file.get();
 			}
-			word += file.get(); // захватываем ']'
+			word += file.get(); // Р·Р°С…РІР°С‚С‹РІР°РµРј ']'
 			if (find(terminals.begin(), terminals.end(), word) == terminals.end())
 				terminals.push_back(word);
 			rule.push_back(word);
@@ -149,7 +156,7 @@ void Sintax::Rule_to_code(fstream& file)
 			break;
 
 		case '<':
-			// Обработка нетерминала в угловых скобках
+			// РћР±СЂР°Р±РѕС‚РєР° РЅРµС‚РµСЂРјРёРЅР°Р»Р° РІ СѓРіР»РѕРІС‹С… СЃРєРѕР±РєР°С…
 			if (!word.empty())
 			{
 				if (find(terminals.begin(), terminals.end(), word) == terminals.end())
@@ -161,18 +168,18 @@ void Sintax::Rule_to_code(fstream& file)
 			{
 				word += file.get();
 			}
-			word += file.get(); // захватываем '>'
+			word += file.get(); // Р·Р°С…РІР°С‚С‹РІР°РµРј '>'
 			rule.push_back(word);
 			word.clear();
 			break;
 
 		default:
-			// Добавление символа к текущему слову
+			// Р”РѕР±Р°РІР»РµРЅРёРµ СЃРёРјРІРѕР»Р° Рє С‚РµРєСѓС‰РµРјСѓ СЃР»РѕРІСѓ
 			word += file.get();
 			break;
 		}
 
-		// Обработка конца файла
+		// РћР±СЂР°Р±РѕС‚РєР° РєРѕРЅС†Р° С„Р°Р№Р»Р°
 		if (file.peek() == EOF)
 		{
 			if (!word.empty())
@@ -194,7 +201,7 @@ void Sintax::Rule_to_code(fstream& file)
 	Remove_Duplicate_Eps();
 }
 
-// Удаляет повторяющиеся [eps] из всех правил в map_rules
+// РЈРґР°Р»СЏРµС‚ РїРѕРІС‚РѕСЂСЏСЋС‰РёРµСЃСЏ [eps] РёР· РІСЃРµС… РїСЂР°РІРёР» РІ map_rules
 void Sintax::Remove_Duplicate_Eps()
 {
 	for (auto& [key, rules] : map_rules)
@@ -202,16 +209,16 @@ void Sintax::Remove_Duplicate_Eps()
 		for (auto& rule : rules)
 		{
 			bool eps_found = false;
-			// Используем erase-remove idiom для удаления всех повторных [eps]
+			// РСЃРїРѕР»СЊР·СѓРµРј erase-remove idiom РґР»СЏ СѓРґР°Р»РµРЅРёСЏ РІСЃРµС… РїРѕРІС‚РѕСЂРЅС‹С… [eps]
 			rule.erase(
 				std::remove_if(rule.begin(), rule.end(),
 					[&eps_found](const std::string& symbol) {
 						if (symbol == "[eps]") {
 							if (!eps_found) {
 								eps_found = true;
-								return false; // оставить первый [eps]
+								return false; // РѕСЃС‚Р°РІРёС‚СЊ РїРµСЂРІС‹Р№ [eps]
 							}
-							return true; // удалить повторные [eps]
+							return true; // СѓРґР°Р»РёС‚СЊ РїРѕРІС‚РѕСЂРЅС‹Рµ [eps]
 						}
 						return false;
 					}),
@@ -220,23 +227,23 @@ void Sintax::Remove_Duplicate_Eps()
 	}
 }
 
-// Сообщение об ошибке в правиле и завершение работы
+// РЎРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ РІ РїСЂР°РІРёР»Рµ Рё Р·Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹
 void Sintax::Rule_Error(string error_text, fstream& file)
 {
 	cerr << "Error: " << error_text << endl;
 	while (file.peek() != '\n' && file.peek() != EOF)
-		file.get(); // пропуск до конца строки
+		file.get(); // РїСЂРѕРїСѓСЃРє РґРѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
 	exit(EXIT_FAILURE);
 }
 
-// Сообщение об ошибке и завершение работы
+// РЎРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ Рё Р·Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹
 void Sintax::Error(string error_text)
 {
 	cerr << "Error: " << error_text << endl;
 	exit(EXIT_FAILURE);
 }
 
-// Поиск всех нетерминалов в файле
+// РџРѕРёСЃРє РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ РІ С„Р°Р№Р»Рµ
 void Sintax::Find_Nonterminals(fstream& file)
 {
 	int start_ptr = ios::cur;
@@ -263,34 +270,32 @@ void Sintax::Find_Nonterminals(fstream& file)
 	file.seekg(start_ptr, ios::beg);
 }
 
-// Создание вспомогательных таблиц для синтаксического анализа
-vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonterminal_)
+// РЎРѕР·РґР°РЅРёРµ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹С… С‚Р°Р±Р»РёС† РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
+vector<Sintax::auxiliary_table> Sintax::Create_Tables(string start_nonterminal_)
 {
+	int gcounter_test = 0;
+	string start_nonterminal = start_nonterminal_; // РќР°С‡Р°Р»СЊРЅС‹Р№ РЅРµС‚РµСЂРјРёРЅР°Р» РіСЂР°РјРјР°С‚РёРєРё
 
-	ofstream TEST_FILE1("File test1.txt");
-	ofstream TEST_FILE2("File test2.txt");
-	int test_counter = 0;
-
-	string start_nonterminal = start_nonterminal_; // Начальный нетерминал грамматики
-
-	// Проверка наличия стартового нетерминала
+	// РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ СЃС‚Р°СЂС‚РѕРІРѕРіРѕ РЅРµС‚РµСЂРјРёРЅР°Р»Р°
 	while (find(nonterminals.begin(), nonterminals.end(), start_nonterminal) == nonterminals.end())
 	{
 		cout << "Enter the starting nonterminal" << endl << "-> ";
 		cin >> start_nonterminal;
 	}
 
-	vector<vector<canonical_table>> table;
+	vector<auxiliary_table> table;
 	vector<canonical_table> start_table;
 	list<for_goto> table_goto_args;
 
-	// Формирование стартовой таблицы
+	// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†С‹
 	start_table = Start_Table(start_nonterminal);
 
-	table.push_back(start_table);
+	Formating_Table(start_table);
 
-	// Поиск всех нетерминалов, следующих за точкой в стартовой таблице
-	for (auto& i : Find_All_Goto(*table.begin()))
+	table.push_back(auxiliary_table(start_table, for_goto(-1, start_nonterminal)));
+
+	// РџРѕРёСЃРє РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ, СЃР»РµРґСѓСЋС‰РёС… Р·Р° С‚РѕС‡РєРѕР№ РІ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†Рµ
+	for (auto& i : Find_All_Goto(start_table))
 	{
 		if (find(table_goto_args.begin(), table_goto_args.end(), i) == table_goto_args.end())
 		{
@@ -302,58 +307,42 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 	int counter = 0;
 	for (auto& i : table_goto_args)
 	{
-
 		vector<canonical_table> temp;
 		for (auto& j : table)
 		{
-			for (auto& t : j)
+			for (auto& t : j.table)
 			{
 				if (t.number_table == i.number_table)
 					temp.push_back(t);
 			}
 		}
 		
+		// РџСѓСЃС‚С‹Рµ РїСЂР°РІРёР»Р° РЅРµ С‚СЂРѕРіР°РµРј
+		if (i.symbol == "[eps]")
+			continue;
+		
 		vector<canonical_table> res = GOTO(i, temp, i.number_table);
 
-		// Удаление дубликатов из res
-		std::vector<canonical_table> unique_res;
-		for (const auto& elem : res) {
-			if (find(unique_res.begin(), unique_res.end(), elem) == unique_res.end())
-				unique_res.push_back(elem);
-		}
-		res = move(unique_res);
+		// Р¤РѕСЂРјР°С‚РёСЂСѓРµРј С‚Р°Р±Р»РёС†Сѓ
+		Formating_Table(res);
 
-		for (int j = res.size() - 1; j > 0; j--)
-		{
-			bool swapped = false;
-
-			for (int k = 0; k < j; k++)
+		// РџСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РёРµ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ С‚Р°Р±Р»РёС†С‹ СЃ С‚Р°РєРёРј Р¶Рµ СЃРѕРґРµСЂР¶РёРјС‹Рј
+		auto find_b = find_if(
+			table.begin(),
+			table.end(),
+			[&res](const auxiliary_table& a) 
 			{
-				if (res[k].nonterminal > res[k + 1].nonterminal || res[k].nonterminal == res[k + 1].nonterminal && res[k].rule > res[k + 1].rule)
-				{
-					swap(res[k], res[k + 1]);
-					swapped = true;
-				}
-			}
+				return a.table == res;
+			});
 
-			if (swapped == false)
-				break;
-		}
-
-		auto find_a = find(table.begin(), table.end(), res);
-
-		if (find_a != table.end())
+		// Р•СЃР»Рё С‚Р°РєР°СЏ С‚Р°Р±Р»РёС†Р° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, РїСЂРѕРїСѓСЃРєР°РµРј РµС‘
+		cout << gcounter_test++ << endl;
+		if (find_b != table.end())
 		{
-			TEST_FILE1 << "Count " << test_counter << " | " << counter << endl;
-			TEST_FILE1 << (*res.begin()).number_table << endl;
-			Write_Canonical_Table(*find_a, TEST_FILE1);
-			test_counter++;
 			continue;
 		}
-
-		TEST_FILE2 << "Count " << test_counter << " | " << counter << endl;
-		Write_Canonical_Table(res, TEST_FILE2);
-		test_counter++;
+		// Р•СЃР»Рё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ С‚Р°Р±Р»РёС†Сѓ
+		
 		counter++;
 
 		for (auto& j : res)
@@ -361,35 +350,31 @@ vector<vector<Sintax::canonical_table>> Sintax::Create_Tables(string start_nonte
 			j.number_table = counter;
 		}
 
-		table.push_back(res);
+		table.push_back(auxiliary_table(res, i));
 
 
-		// Высчитываение аргументов goto для последующих таблиц 
+		// Р’С‹СЃС‡РёС‚С‹РІР°РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚РѕРІ goto РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РёС… С‚Р°Р±Р»РёС† 
 		list<canonical_table> result_list(res.begin(), res.end());
 		for (auto& j : result_list)
 		{
-			j.number_table = counter;
 			if (j.rule.size() > j.dot)
 			{
 				if (find(table_goto_args.begin(), table_goto_args.end(), for_goto(j.number_table, j.rule[j.dot])) == table_goto_args.end())
 				{
 					table_goto_args.push_back(for_goto(j.number_table, j.rule[j.dot]));
-					//cout << "Added goto: " << j.number_table << " " << j.rule[j.dot] << endl;
 				}
 			}
 			
 		}
 	}
 
-	//Print_GO_TO_args(table_goto_args);
-
 	return table;
 }
 
-// Вычисление множества FIRST для нетерминала
+// Р’С‹С‡РёСЃР»РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° FIRST РґР»СЏ РЅРµС‚РµСЂРјРёРЅР°Р»Р°
 vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 {
-	// Если уже были в этом нетерминале на этом пути — предотвращаем зацикливание
+	// Р•СЃР»Рё СѓР¶Рµ Р±С‹Р»Рё РІ СЌС‚РѕРј РЅРµС‚РµСЂРјРёРЅР°Р»Рµ РЅР° СЌС‚РѕРј РїСѓС‚Рё вЂ” РїСЂРµРґРѕС‚РІСЂР°С‰Р°РµРј Р·Р°С†РёРєР»РёРІР°РЅРёРµ
 	if (visited.count(nonterminal))
 		return {};
 
@@ -404,7 +389,7 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 	for (auto& i : map_rules[nonterminal])
 	{
 		words.clear();
-		// Предпологаем, что лишние eps удалены 
+		// РџСЂРµРґРїРѕР»РѕРіР°РµРј, С‡С‚Рѕ Р»РёС€РЅРёРµ eps СѓРґР°Р»РµРЅС‹ 
 		if (i.size() == 1 && i[0] == "[eps]")
 			res.push_back({ "[eps]" });
 		for (auto& j : i)
@@ -417,11 +402,10 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 			}
 			else
 			{
-				// Передаём visited дальше!
+				// РџРµСЂРµРґР°С‘Рј visited РґР°Р»СЊС€Рµ!
 				vector<string> temp = FIRST_One(j, visited);
 
-				res = Cartesian_Product(res, temp);
-				res = Clipping(1, res);
+				res = Replacing_Eps(res, temp);
 
 				words.clear();
 				break;
@@ -435,13 +419,13 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 		}		
 	}
 
-	// Удаление повторов в res
+	// РЈРґР°Р»РµРЅРёРµ РїРѕРІС‚РѕСЂРѕРІ РІ res
 	res = Delete_Repetitions(res);
 
 	return res;
 }
 
-// Вычисляет множество FIRST для элементов, следующих за позицией t в правиле r
+// Р’С‹С‡РёСЃР»СЏРµС‚ РјРЅРѕР¶РµСЃС‚РІРѕ FIRST РґР»СЏ СЌР»РµРјРµРЅС‚РѕРІ, СЃР»РµРґСѓСЋС‰РёС… Р·Р° РїРѕР·РёС†РёРµР№ t РІ РїСЂР°РІРёР»Рµ r
 vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r)
 {
 	if (r.size() == 0)
@@ -449,36 +433,36 @@ vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_it
 	vector<vector<string>> result;
 	vector<string> prefix;
 
-	auto t = it; // Создаём итератор для обхода
-	++t; // Переходим к следующему элементу после t
+	auto t = it; // РЎРѕР·РґР°С‘Рј РёС‚РµСЂР°С‚РѕСЂ РґР»СЏ РѕР±С…РѕРґР°
+	++t; // РџРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СЌР»РµРјРµРЅС‚Сѓ РїРѕСЃР»Рµ t
 
-	// Если достигли конца правила — возвращаем эпсилон
+	// Р•СЃР»Рё РґРѕСЃС‚РёРіР»Рё РєРѕРЅС†Р° РїСЂР°РІРёР»Р° вЂ” РІРѕР·РІСЂР°С‰Р°РµРј СЌРїСЃРёР»РѕРЅ
 	if (t == r.end())
 	{
 		result.push_back({ "[eps]" });
 		return result;
 	}
 
-	// Проходим по всем элементам после t
+	// РџСЂРѕС…РѕРґРёРј РїРѕ РІСЃРµРј СЌР»РµРјРµРЅС‚Р°Рј РїРѕСЃР»Рµ t
 	while (t != r.end())
 	{
 		if (IsTerminal(*t))
 		{
-			// Если встретили терминал (кроме [eps]), добавляем его и завершаем
+			// Р•СЃР»Рё РІСЃС‚СЂРµС‚РёР»Рё С‚РµСЂРјРёРЅР°Р» (РєСЂРѕРјРµ [eps]), РґРѕР±Р°РІР»СЏРµРј РµРіРѕ Рё Р·Р°РІРµСЂС€Р°РµРј
 			if (*t != "[eps]")
 			{
 				prefix.push_back(*t);
 				result.push_back(prefix);
 				return result;
 			}
-			// Если [eps], просто пропускаем
+			// Р•СЃР»Рё [eps], РїСЂРѕСЃС‚Рѕ РїСЂРѕРїСѓСЃРєР°РµРј
 		}
 		else
 		{
-			// Для нетерминала вычисляем его FIRST
+			// Р”Р»СЏ РЅРµС‚РµСЂРјРёРЅР°Р»Р° РІС‹С‡РёСЃР»СЏРµРј РµРіРѕ FIRST
 			vector<vector<string>> firstSet = { FIRST_One(*t, {}) };
 
-			// Для каждого множества из FIRST добавляем к префиксу
+			// Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РјРЅРѕР¶РµСЃС‚РІР° РёР· FIRST РґРѕР±Р°РІР»СЏРµРј Рє РїСЂРµС„РёРєСЃСѓ
 			for (const auto& first : firstSet)
 			{
 				vector<string> combined = prefix;
@@ -486,7 +470,7 @@ vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_it
 				result.push_back(combined);
 			}
 
-			// Проверяем, есть ли [eps] среди FIRST
+			// РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё [eps] СЃСЂРµРґРё FIRST
 			bool hasEps = false;
 			for (const auto& first : firstSet)
 			{
@@ -496,14 +480,14 @@ vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_it
 					break;
 				}
 			}
-			// Если нет [eps], дальше не идём
+			// Р•СЃР»Рё РЅРµС‚ [eps], РґР°Р»СЊС€Рµ РЅРµ РёРґС‘Рј
 			if (!hasEps)
 				return result;
 		}
 		++t;
 	}
 
-	// Если дошли до конца, добавляем [eps]
+	// Р•СЃР»Рё РґРѕС€Р»Рё РґРѕ РєРѕРЅС†Р°, РґРѕР±Р°РІР»СЏРµРј [eps]
 	result.push_back({ "[eps]" });
 	return result;
 }
@@ -527,7 +511,7 @@ void Sintax::Print_Firsts(vector<vector<vector<string>>> f)
 	cout << endl;
 }
 
-// Декартово произведение двух списков списков строк
+// Р”РµРєР°СЂС‚РѕРІРѕ РїСЂРѕРёР·РІРµРґРµРЅРёРµ РґРІСѓС… СЃРїРёСЃРєРѕРІ СЃРїРёСЃРєРѕРІ СЃС‚СЂРѕРє
 vector<string> Sintax::Cartesian_Product(vector<string> to, vector<string> from)
 {
 	vector<string> result;
@@ -545,7 +529,7 @@ vector<string> Sintax::Cartesian_Product(vector<string> to, vector<string> from)
 	return result;
 }
 
-// Обрезка списков до длины n
+// РћР±СЂРµР·РєР° СЃРїРёСЃРєРѕРІ РґРѕ РґР»РёРЅС‹ n
 vector<string> Sintax::Clipping(int n, vector<string> from)
 {
 	vector<string> result;
@@ -569,7 +553,39 @@ vector<string> Sintax::Delete_Repetitions(vector<string> from)
 	return res;
 }
 
-// Проверка, является ли строка нетерминалом
+vector<string> Sintax::Replacing_Eps(vector<string> to, vector<string> from)
+{
+	vector<string> res = to;
+
+	if (from.empty())
+		return res;
+
+	if (to.empty())
+		return from;
+
+	auto it = from.begin();
+
+	for (auto& i : res)
+	{
+		if (i == "[eps]")
+		{
+			i = *it;
+			it++;
+
+			while (it != from.end())
+			{
+				res.push_back(*it);
+				it++;
+			}
+			break;
+		}
+	}
+
+	return res;
+
+}
+
+// РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕРєР° РЅРµС‚РµСЂРјРёРЅР°Р»РѕРј
 bool Sintax::IsNonterminal(string s)
 {
 	if (s[0] == '<' && s[s.size() - 1] == '>')
@@ -584,7 +600,7 @@ bool Sintax::IsNonterminal(string s)
 	return false;
 }
 
-// Проверка, является ли строка терминалом
+// РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕРєР° С‚РµСЂРјРёРЅР°Р»РѕРј
 bool Sintax::IsTerminal(string s)
 {
 	if (!IsNonterminal(s))
@@ -599,7 +615,7 @@ bool Sintax::IsTerminal(string s)
 	return false;
 }
 
-// Проверка, является ли строка ключевым словом
+// РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕРєР° РєР»СЋС‡РµРІС‹Рј СЃР»РѕРІРѕРј
 bool Sintax::IsKeyword(string s)
 {
 	if (s[0] == '[' && s[s.size() - 1] == ']')
@@ -614,7 +630,78 @@ bool Sintax::IsKeyword(string s)
 	return false;
 }
 
-// Формирование стартовой таблицы для синтаксического анализа
+vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>& can_t)
+{
+	// РЈРґР°Р»РµРЅРёРµ РґСѓР±Р»РёРєР°С‚РѕРІ РёР· can_t
+	vector<canonical_table> unique_can_t;
+	for (const auto& elem : can_t) {
+		if (find(unique_can_t.begin(), unique_can_t.end(), elem) == unique_can_t.end())
+			unique_can_t.push_back(elem);
+	}
+	can_t = move(unique_can_t);
+
+	// РћР±СЉРµРґРёРЅРµРЅРёРµ РїСЂР°РІРёР» СЃ СЂР°Р·РЅС‹РјРё following РІ РѕРґРЅРѕ РїСЂР°РІРёР»Рѕ
+	list<canonical_table> list_can_t;
+	for (auto j : can_t)
+	{
+		list_can_t.push_back(j);
+	}
+	can_t.clear();
+
+	for (auto it1 = list_can_t.begin(); it1 != list_can_t.end(); )
+	{
+		auto it2 = std::next(it1);
+
+		while (it2 != list_can_t.end())
+		{
+			if (it1->nonterminal == it2->nonterminal &&
+				it1->rule == it2->rule &&
+				it1->dot == it2->dot)
+			{
+				// РћР±СЉРµРґРёРЅСЏРµРј following
+				it1->following.insert(it1->following.end(), it2->following.begin(), it2->following.end());
+
+				// РЈРґР°Р»СЏРµРј РґСѓР±Р»РёРєР°С‚С‹
+				sort(it1->following.begin(), it1->following.end());
+				it1->following.erase(std::unique(it1->following.begin(), it1->following.end()), it1->following.end());
+
+				// РЈРґР°Р»СЏРµРј it2 Рё РїСЂРѕРґРѕР»Р¶Р°РµРј
+				it2 = list_can_t.erase(it2);
+			}
+			else
+			{
+				++it2;
+			}
+		}
+
+		can_t.push_back(*it1);
+		it1 = list_can_t.erase(it1);
+	}
+
+	list_can_t.clear();
+
+	// РЎРѕСЂС‚РёСЂРѕРІРєР° can_t РїРѕ РЅРµС‚РµСЂРјРёРЅР°Р»Сѓ Рё РїСЂР°РІРёР»Сѓ
+	//for (int j = can_t.size() - 1; j > 0; j--)
+	//{
+	//	bool swapped = false;
+
+	//	for (int k = 0; k < j; k++)
+	//	{
+	//		if (can_t[k].nonterminal > can_t[k + 1].nonterminal || can_t[k].nonterminal == can_t[k + 1].nonterminal && can_t[k].rule > can_t[k + 1].rule)
+	//		{
+	//			swap(can_t[k], can_t[k + 1]);
+	//			swapped = true;
+	//		}
+	//	}
+
+	//	if (swapped == false)
+	//		break;
+	//}
+
+	return can_t;
+}
+
+// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†С‹ РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
 vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 {
 	list<canonical_table> temp_res;
@@ -647,23 +734,6 @@ vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 		res.push_back(i);
 	}
 
-	for (int j = res.size() - 1; j > 0; j--)
-	{
-		bool swapped = false;
-
-		for (int k = 0; k < j; k++)
-		{
-			if (res[k].nonterminal > res[k + 1].nonterminal || res[k].nonterminal == res[k + 1].nonterminal && res[k].rule > res[k + 1].rule)
-			{
-				swap(res[k], res[k + 1]);
-				swapped = true;
-			}
-		}
-
-		if (swapped == false)
-			break;
-	}
-
 	return res;
 }
 
@@ -687,16 +757,12 @@ Sintax::for_goto Sintax::Find_One_Goto(const canonical_table& can_t)
 	return for_goto(-1, " ");
 }
 
-void Sintax::Print_Canonical_Table(const vector<canonical_table>& can_t)
+void Sintax::Print_Small_Table(const auxiliary_table& can_t)
 {
-	int prev_number = -1;
-	for (auto& i : can_t)
+	
+	cout << "A" << (*can_t.table.begin()).number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
+	for (auto& i : can_t.table)
 	{
-		if (prev_number != i.number_table)
-		{
-			cout << "A" << i.number_table << " = {" << endl;
-			prev_number = i.number_table;
-		}
 
 		cout << "[" << i.nonterminal << " -> ";
 		int counter = 0;
@@ -720,16 +786,14 @@ void Sintax::Print_Canonical_Table(const vector<canonical_table>& can_t)
 	cout << "}" << endl << endl;
 }
 
-void Sintax::Write_Canonical_Table(const vector<canonical_table>& can_t, ofstream& file)
+void Sintax::Write_Small_Table(const auxiliary_table& can_t, ofstream& file)
 {
-	int prev_number = -1;
-	for (auto& i : can_t)
+	if (can_t.goto_from.number_table != -1)
+		file << "A" << (*can_t.table.begin()).number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
+	else
+		file << "A" << (*can_t.table.begin()).number_table << " = {" << endl;
+	for (auto& i : can_t.table)
 	{
-		if (prev_number != i.number_table)
-		{
-			file << "A" << i.number_table << " = {" << endl;
-			prev_number = i.number_table;
-		}
 
 		file << "[" << i.nonterminal << " -> ";
 		int counter = 0;
@@ -753,59 +817,62 @@ void Sintax::Write_Canonical_Table(const vector<canonical_table>& can_t, ofstrea
 	file << "}" << endl << endl;
 }
 
-// Реализация функции GOTO для LR(1)-анализатора
+// Р РµР°Р»РёР·Р°С†РёСЏ С„СѓРЅРєС†РёРё GOTO РґР»СЏ LR(1)-Р°РЅР°Р»РёР·Р°С‚РѕСЂР°
 vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table)
 {
-	// Множество уникальных ситуаций
-	std::vector<canonical_table> res;
+	// РњРЅРѕР¶РµСЃС‚РІРѕ СѓРЅРёРєР°Р»СЊРЅС‹С… СЃРёС‚СѓР°С†РёР№
+	vector<canonical_table> res;
 
-	// Очередь для обработки новых ситуаций
-	std::list<canonical_table> queue;
+	// РћС‡РµСЂРµРґСЊ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РЅРѕРІС‹С… СЃРёС‚СѓР°С†РёР№
+	list<canonical_table> queue;
 
-	// 1. Сдвигаем точку вправо для всех ситуаций, где после точки стоит args.symbol
+	// РЎРґРІРёРіР°РµРј С‚РѕС‡РєСѓ РІРїСЂР°РІРѕ РґР»СЏ РІСЃРµС… СЃРёС‚СѓР°С†РёР№, РіРґРµ РїРѕСЃР»Рµ С‚РѕС‡РєРё СЃС‚РѕРёС‚ СЃРёРјРІРѕР»
 	for (const auto& i : can_t)
 	{
 		if (i.number_table != number_table)
 			continue;
 		if (i.rule.size() <= i.dot)
 			continue;
+
+		// РџСЂРѕРІРµСЂСЏРµРј, СЃРѕРІРїР°РґР°РµС‚ Р»Рё СЃРёРјРІРѕР» РїРѕСЃР»Рµ С‚РѕС‡РєРё СЃ РёСЃРєРѕРјС‹Рј СЃРёРјРІРѕР»РѕРј
 		if (i.rule[i.dot] == args.symbol)
 		{
 			canonical_table new_item(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
-			if (std::find(res.begin(), res.end(), new_item) == res.end()) {
+
+			// РџСЂРѕРІРµСЂСЏРµРј, РЅРµ РґРѕР±Р°РІР»РµРЅ Р»Рё СѓР¶Рµ СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚
+			if (find(res.begin(), res.end(), new_item) == res.end()) 
+			{
 				res.push_back(new_item);
 				queue.push_back(new_item);
 			}
 		}
 	}
 
-	// 2. closure: обрабатываем только новые ситуации из очереди
+	// РћР±СЂР°Р±Р°С‚С‹РІР°РµРј С‚РѕР»СЊРєРѕ РЅРѕРІС‹Рµ СЃРёС‚СѓР°С†РёРё РёР· РѕС‡РµСЂРµРґРё
 	while (!queue.empty())
 	{
 		auto it = queue.front();
 		queue.pop_front();
 
+		// РџСЂРѕРІРµСЂСЏРµРј, РЅРµ РґРѕСЃС‚РёРіР»Рё Р»Рё РєРѕРЅС†Р° РїСЂР°РІРёР»Р° Рё РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃР»РµРґСѓСЋС‰РёР№ СЃРёРјРІРѕР» РЅРµС‚РµСЂРјРёРЅР°Р»РѕРј
 		if (it.rule.size() > it.dot && IsNonterminal(it.rule[it.dot]))
 		{
 			string B = it.rule[it.dot];
 			for (const auto& rule : map_rules[B])
 			{
-				for (const auto& lookahead : it.following)
+				for (auto firsts : FIRST_One_for_next(it.rule.begin() + it.dot, it.rule))
 				{
-					auto firsts = FIRST_One_for_next(it.rule.begin() + it.dot, it.rule);
-					std::set<std::string> first_beta;
-					for (const auto& f : firsts)
-						for (const auto& s : f)
-							first_beta.insert(s);
+					vector<string> temp = firsts;
+					temp = Replacing_Eps(temp, it.following);//рџ¦
+					canonical_table new_item(B, 0, rule, temp, it.number_table);
 
-					for (const auto& f : first_beta)
+					// РџСЂРѕРІРµСЂСЏРµРј, РЅРµ РґРѕР±Р°РІР»РµРЅ Р»Рё СѓР¶Рµ СЌС‚РѕС‚ СЌР»РµРјРµРЅС‚
+					if (std::find(res.begin(), res.end(), new_item) == res.end())
 					{
-						canonical_table new_item(B, 0, rule, {f}, it.number_table);
-						if (std::find(res.begin(), res.end(), new_item) == res.end()) {
-							res.push_back(new_item);
-							queue.push_back(new_item); // только новые!
-						}
+						res.push_back(new_item);
+						queue.push_back(new_item); // С‚РѕР»СЊРєРѕ РЅРѕРІС‹Рµ!
 					}
+
 				}
 			}
 		}
@@ -814,7 +881,7 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 	return res;
 }
 
-// Печать всех правил грамматики
+// РџРµС‡Р°С‚СЊ РІСЃРµС… РїСЂР°РІРёР» РіСЂР°РјРјР°С‚РёРєРё
 void Sintax::Print_Rules()
 {
 	for (auto it = map_rules.begin(); it != map_rules.end(); it++)
@@ -832,7 +899,7 @@ void Sintax::Print_Rules()
 	}
 }
 
-// Печать всех правил грамматики
+// РџРµС‡Р°С‚СЊ РІСЃРµС… РїСЂР°РІРёР» РіСЂР°РјРјР°С‚РёРєРё
 void Sintax::Write_Rules(ofstream& file)
 {
 	for (auto it = map_rules.begin(); it != map_rules.end(); it++)
@@ -850,7 +917,7 @@ void Sintax::Write_Rules(ofstream& file)
 	}
 }
 
-// Печать всех нетерминалов
+// РџРµС‡Р°С‚СЊ РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ
 void Sintax::Print_Nonterminals()
 {
 	cout << "Nonterminals: ";
@@ -861,7 +928,7 @@ void Sintax::Print_Nonterminals()
 	cout << endl;
 }
 
-// Печать всех нетерминалов
+// РџРµС‡Р°С‚СЊ РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ
 void Sintax::Write_Nonterminals(ofstream& file)
 {
 	file << "Nonterminals: ";
@@ -872,7 +939,7 @@ void Sintax::Write_Nonterminals(ofstream& file)
 	file << endl;
 }
 
-// Печать всех терминалов
+// РџРµС‡Р°С‚СЊ РІСЃРµС… С‚РµСЂРјРёРЅР°Р»РѕРІ
 void Sintax::Print_Terminals()
 {
 	cout << "Terminals: ";
@@ -883,7 +950,7 @@ void Sintax::Print_Terminals()
 	cout << endl;
 }
 
-// Печать всех терминалов
+// РџРµС‡Р°С‚СЊ РІСЃРµС… С‚РµСЂРјРёРЅР°Р»РѕРІ
 void Sintax::Write_Terminals(ofstream& file)
 {
 	file << "Terminals: ";
