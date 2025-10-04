@@ -11,6 +11,15 @@ class Sintax : protected TableToken
 {
 protected:
 
+	// Карта: нетерминал -> список правил (каждое правило — список строк)
+	map <string, vector<vector<string>>> map_rules;
+
+	// Список нетерминалов грамматики
+	vector<string> nonterminals;
+
+	// Список терминалов грамматики
+	vector<string> terminals;
+
 	// Список ключевых слов грамматики
 	const vector<string> Keywords
 	{
@@ -55,9 +64,57 @@ protected:
 		}
 	};
 
+	// Таблицы goto
+	vector<auxiliary_table> tables;
+
+	struct row_tabular_analyzer
+	{
+		int number_row;
+		vector<string> f;
+		vector<int> g;
+
+		row_tabular_analyzer(int number)
+		{
+			number_row = number;
+		}
+
+		row_tabular_analyzer(int number, int t, int nont)
+		{
+			number_row = number;
+
+			//Создание пустышек
+			f.assign(t, "-"); 
+			g.assign(t + nont - 1, -1); 
+		}
+	};
+
+	struct tabular_analyzer
+	{
+		// | №        | f               | g                       |
+		// |------------------------------------------------------|
+		// |          | терминалы и eps | терминалы и нетерминалы |
+
+		vector<row_tabular_analyzer> rows;
+
+		tabular_analyzer()
+		{
+			;
+		}
+
+		tabular_analyzer(int table, int t, int nont)
+		{
+			for (int i = 0; i < table; i++)
+			{
+				rows.push_back(row_tabular_analyzer(i, t, nont));
+			}
+		}
+	};
+
+
+
 public:
 	// Конструктор, принимает имя файла с грамматикой
-	Sintax(string file_name, string start_nonterminal_ = "<S>");
+	Sintax();
 
 	// Деструктор
 	~Sintax();
@@ -89,17 +146,14 @@ public:
 
 	void Print_Firsts(vector<vector<vector<string>>> f);
 
+	void Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& file);
+
 protected:
 
 
-	// Карта: нетерминал -> список правил (каждое правило — список строк)
-	map <string, vector<vector<string>>> map_rules;
 
-	// Список нетерминалов грамматики
-	vector<string> nonterminals;
 
-	// Список терминалов грамматики
-	vector<string> terminals;
+
 
 	// Читает правила из файла и заполняет map_rules, nonterminals, terminals
 	void Rule_to_code(fstream& file);
@@ -147,14 +201,19 @@ protected:
 	bool IsKeyword(string s);
 
 	// Форматирование таблицы под общий вид
-	vector <canonical_table> Formating_Table(vector<canonical_table>& can_t);
+	vector <Sintax::canonical_table> Formating_Table(vector<Sintax::canonical_table>& can_t);
 
 	// Создает стартовую таблицу для синтаксического анализа
-	vector<canonical_table> Start_Table(string start_nonterminal);
+	vector<Sintax::canonical_table> Start_Table(string start_nonterminal);
 
-	vector<Sintax::for_goto> Find_All_Goto(const vector<canonical_table>& can_t);
+	vector<Sintax::for_goto> Find_All_Goto(const vector<Sintax::canonical_table>& can_t);
 
-	Sintax::for_goto Find_One_Goto(const canonical_table& can_t);
+	Sintax::for_goto Find_One_Goto(const Sintax::canonical_table& can_t);
 
-	vector<canonical_table>GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table);
+	vector<Sintax::canonical_table>GOTO(const for_goto& args, const vector<Sintax::canonical_table>& can_t, int number_table);
+
+	//Восходящий табличный анализатор
+	Sintax::tabular_analyzer Tabular_analyzer(Sintax::tabular_analyzer& TabAn);
+
+
 };

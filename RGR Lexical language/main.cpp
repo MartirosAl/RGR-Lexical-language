@@ -8,7 +8,7 @@ int main()
    //
    //result.Print_Table_Token();
 
-   Sintax A("Grammar.txt", "<S>");
+   Sintax A;
    //A.Print_Rules();
    //A.Print_Nonterminals();
    //A.Print_Terminals();

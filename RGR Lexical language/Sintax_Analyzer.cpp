@@ -1,20 +1,20 @@
 ﻿#include "Sintax_Analyzer.h"
 
 // Конструктор класса Sintax
-Sintax::Sintax(string file_name, string start_nonterminal_)
+Sintax::Sintax()
 {
 	ofstream File_for_writing("File for writing.txt");
 	if (!File_for_writing.is_open())
 	{
-		cerr << "Error opening file: " << file_name << endl;
+		cerr << "Error opening file: File for writing.txt" << endl;
 		return;
 	}
 	File_for_writing.clear();
 
-	fstream file(file_name);
+	fstream file("Grammar.txt");
 	if (!file.is_open())
 	{
-		cerr << "Error opening file: " << file_name << endl;
+		cerr << "Error opening file: Grammar.txt" << endl;
 		return;
 	}
 
@@ -25,9 +25,10 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 	Write_Rules(File_for_writing);
 	File_for_writing << endl;
 
-	vector<auxiliary_table> tables;
+
 	// Создание вспомогательных таблиц для синтаксического анализа
-	tables = Create_Tables(start_nonterminal_);
+	// !!! Есть ошибки, но Grammar.txt обрабатывает нормально (вроде)
+	tables = Create_Tables();
 
 	Write_Nonterminals(File_for_writing);
 	File_for_writing << endl;
@@ -40,6 +41,12 @@ Sintax::Sintax(string file_name, string start_nonterminal_)
 		Write_Small_Table(i, File_for_writing);
 	}
 	File_for_writing << endl;
+
+	tabular_analyzer table_an((int)tables.size(), (int)terminals.size(), (int)nonterminals.size());
+
+	Tabular_analyzer(table_an);
+
+	Write_Tabular_analyzer(table_an, File_for_writing);
 
 	File_for_writing.close();
 	file.close();
@@ -273,7 +280,6 @@ void Sintax::Find_Nonterminals(fstream& file)
 // Создание вспомогательных таблиц для синтаксического анализа
 vector<Sintax::auxiliary_table> Sintax::Create_Tables(string start_nonterminal_)
 {
-	int gcounter_test = 0;
 	string start_nonterminal = start_nonterminal_; // Начальный нетерминал грамматики
 
 	// Проверка наличия стартового нетерминала
@@ -336,7 +342,6 @@ vector<Sintax::auxiliary_table> Sintax::Create_Tables(string start_nonterminal_)
 			});
 
 		// Если такая таблица уже существует, пропускаем её
-		cout << gcounter_test++ << endl;
 		if (find_b != table.end())
 		{
 			continue;
@@ -405,7 +410,8 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 				// Передаём visited дальше!
 				vector<string> temp = FIRST_One(j, visited);
 
-				res = Replacing_Eps(res, temp);
+				for (auto& v : temp)
+					res.push_back(v);
 
 				words.clear();
 				break;
@@ -510,6 +516,52 @@ void Sintax::Print_Firsts(vector<vector<vector<string>>> f)
 	}
 	cout << endl;
 }
+
+void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& file)
+{
+	file << "   |" << "f";
+	for (int i = 0; i < terminals.size(); i++)
+		file << " \t";
+	file << "|| g" << endl;
+
+	file << "  |";
+
+	for (int i = 0; i < terminals.size(); i++)
+	{
+		file << terminals[i] << "\t |";
+	}
+
+	file << "||";
+
+	for (int i = 0; i < nonterminals.size(); i++)
+		file << nonterminals[i] << "\t |";
+
+	for (int i = 0; i < terminals.size(); i++)
+	{
+		if (terminals[i] == "[eps]")
+			continue;
+		file << terminals[i] << "\t |";
+	}
+
+	file << endl;
+
+	for (int i = 0; i < TabAn.rows.size(); i++)
+	{
+		file << TabAn.rows[i].number_row << "\t |";
+		for (int j = 0; j < TabAn.rows[i].f.size(); j++)
+		{
+			file << TabAn.rows[i].f[j] << "\t |";
+		}
+		file << "||";
+		for (int j = 0; j < TabAn.rows[i].g.size(); j++)
+		{
+			file << TabAn.rows[i].g[j] << "\t |";
+		}
+		file << endl;
+	}
+}
+
+
 
 // Декартово произведение двух списков списков строк
 vector<string> Sintax::Cartesian_Product(vector<string> to, vector<string> from)
@@ -838,18 +890,8 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 		if (i.rule[i.dot] == args.symbol)
 		{
 			// Создаём новый элемент с увеличенным dot
-			canonical_table new_item;
-			
-			//if (i.nonterminal == i.rule[i.dot])
-			//{
-			//	// Если нетерминал совпадает с символом после точки, добавляем [eps] в following
-			//	new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, {"[eps]"}, i.number_table);
-			//}
-			//else
-			//{
-				// Иначе просто увеличиваем dot
-				new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
-			//}
+			canonical_table new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
+
 
 			// Проверяем, не добавлен ли уже этот элемент
 			if (find(res.begin(), res.end(), new_item) == res.end()) 
@@ -891,6 +933,89 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 	}
 
 	return res;
+}
+
+
+Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabAn)
+{
+
+	//Создание f
+	for (int i = 0; i < tables.size(); i++)
+	{
+
+		for (int j = 0; j < terminals.size(); j++)
+		{
+			for (auto& v : tables[i].table)
+			{
+
+				if (v.dot == v.rule.size() && v.following[0] == "[eps]")
+				{
+					//Допуск
+					TabAn.rows[i].f[j] = "a";
+				}
+				else if (v.dot == v.rule.size())
+				{
+					int find_rule = -1;
+					int count_rule = 0;
+					for (auto& w : map_rules[v.nonterminal])
+					{
+						if (v.rule == w)
+						{
+							find_rule = count_rule;
+						}
+						count_rule++;
+					}
+					if (find_rule == -1)
+					{
+						throw("Error in finding rules");
+					}
+
+					TabAn.rows[i].f[j] = to_string(find_rule);
+				}
+
+				else if (v.rule[v.dot] == terminals[j])
+				{
+					//Переход
+					TabAn.rows[i].f[j] = "t";
+				}
+				else
+				{
+					//Ничего
+					TabAn.rows[i].f[j] = "-";
+				}
+			}
+		}
+	}
+
+	//Создание g
+	for (int i = 0; i < nonterminals.size(); i++)
+	{
+		for (int j = 0; j < tables.size(); j++)
+		{
+			if (nonterminals[i] == tables[j].goto_from.symbol)
+			{
+				TabAn.rows[j].g[i] = tables[j].goto_from.number_table;
+			}
+		}
+	}
+	bool flag_eps = 0;
+	for (int i = nonterminals.size(); i < nonterminals.size() + terminals.size(); i++)
+	{
+		if (terminals[i - nonterminals.size()] == "[eps]")
+		{
+			flag_eps = 1;
+		}
+
+		for (int j = 0; j < tables.size() - 1; j++)
+		{
+			if (terminals[i - nonterminals.size()] == tables[j].goto_from.symbol)
+			{
+				TabAn.rows[j].g[i - flag_eps] = tables[j].goto_from.number_table;
+			}
+		}
+	}
+
+	return TabAn;
 }
 
 // Печать всех правил грамматики
