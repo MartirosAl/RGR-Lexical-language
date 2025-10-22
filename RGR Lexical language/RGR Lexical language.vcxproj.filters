@@ -70,6 +70,15 @@
     <Text Include="Grammar_test3.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="TestL1.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestL2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestL3.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Test4.txt">

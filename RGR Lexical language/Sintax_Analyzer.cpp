@@ -11,24 +11,14 @@ Sintax::Sintax()
 	}
 	File_for_writing.clear();
 
-	fstream file("Grammar.txt");
-	if (!file.is_open())
-	{
-		cerr << "Error opening file: Grammar.txt" << endl;
-		return;
-	}
-
-	// Преобразование правил грамматики в структуру кода
-	Rule_to_code(file);
-
 	//Print_Rules();
 	Write_Rules(File_for_writing);
 	File_for_writing << endl;
 
+	//Создание всех First множеств
+	Firsts = All_FIRSTs();
 
-	// Создание вспомогательных таблиц для синтаксического анализа
-	// !!! Есть ошибки, но Grammar.txt обрабатывает нормально (вроде)
-	tables = Create_Tables();
+	Write_Firsts(Firsts, File_for_writing);
 
 	Write_Nonterminals(File_for_writing);
 	File_for_writing << endl;
@@ -36,211 +26,45 @@ Sintax::Sintax()
 	Write_Terminals(File_for_writing);
 	File_for_writing << endl;
 
-	for (auto& i : tables)
+	// Создание вспомогательных таблиц для синтаксического анализа
+	сanonical_table_system = Create_Tables();
+
+	for (auto& i : сanonical_table_system)
 	{
-		Write_Small_Table(i, File_for_writing);
+		Write_Сanonical_Table_System(i, File_for_writing);
 	}
 	File_for_writing << endl;
 
-	tabular_analyzer table_an((int)tables.size(), (int)terminals.size(), (int)nonterminals.size());
+	File_for_writing << "Not included tables:" << endl;
+	for (auto& i : not_included_tables)
+	{
+		File_for_writing << "A" << i.number_table << " = GOTO(A" << i.goto_from.number_table << "," << i.goto_from.symbol << ")" << endl;
+	}
+	File_for_writing << endl;
 
-	Tabular_analyzer(table_an);
+	// Инициализация табличного анализатора
+	TabAn = tabular_analyzer((int)сanonical_table_system.size(), (int)terminals.size(), (int)nonterminals.size());
 
-	Write_Tabular_analyzer(table_an, File_for_writing);
+	try 
+	{
+		Tabular_analyzer(TabAn);
+	}
+	catch (string a) 
+	{
+		cerr << "Exception: " << a << endl;
+		return;
+	}
+
+	Write_Tabular_analyzer(TabAn, File_for_writing);
 
 	File_for_writing.close();
-	file.close();
 }
 
 Sintax::~Sintax()
 {
-	map_rules.clear();
+	vec_rules.clear();
 	nonterminals.clear();
 	terminals.clear();
-}
-
-// Преобразует правила из файла в структуру map_rules
-void Sintax::Rule_to_code(fstream& file)
-{
-	string word;
-	string key;
-	vector<string> rule;
-
-	int number_string = 0;
-	bool nonterminal_flag = 1;
-
-	// Основной цикл по символам файла
-	while (file.peek() != EOF)
-	{
-		// Поиск нетерминала в начале правила
-		if (nonterminal_flag)
-		{
-			while (file.peek() != '<' && file.peek() != '\n' && file.peek() != EOF)
-			{
-				file.get();
-				continue;
-			}
-			if (file.peek() == '<')
-			{
-				// Считываем нетерминал
-				while (file.peek() != '>')
-				{
-					word += file.get();
-				}
-				word += file.get(); // захватываем '>'
-				while (file.peek() == ' ')
-					file.get();
-
-				// Проверяем наличие '->' после нетерминала
-				if (file.get() == '-' && file.get() == '>')
-				{
-					nonterminal_flag = 0;
-					key = word; // первый считанный нетерминал — ключ
-					if (find(nonterminals.begin(), nonterminals.end(), key) == nonterminals.end())
-					{
-						nonterminals.push_back(key);
-					}
-				}
-				else
-				{
-					Rule_Error("Expected '->' after the nonterminal.", file);
-					continue;
-				}
-				word.clear();
-			}
-			else
-			{
-				Rule_Error("Expected a nonterminal at the beginning of the rule.", file);
-				continue;
-			}
-		}
-
-		// Обработка различных символов в правиле
-		switch (file.peek())
-		{
-		case '\n':
-			file.get();
-			number_string++;
-			if (!word.empty())
-			{
-				rule.push_back(word);
-			}
-			if (map_rules.find(key) == map_rules.end())
-				map_rules[key] = { rule };
-			else
-				map_rules[key].push_back(rule);
-
-			if (!word.empty() && find(terminals.begin(), terminals.end(), word) == terminals.end())
-				terminals.push_back(word);
-			word.clear();
-			rule.clear();
-			nonterminal_flag = 1; // сброс флага для следующего правила
-			break;
-
-		case ' ':
-		case '\t':
-			file.get();
-			break;
-
-		case '[':
-			// Обработка терминала в квадратных скобках
-			if (!word.empty())
-			{
-				rule.push_back(word);
-				if (find(terminals.begin(), terminals.end(), word) == terminals.end())
-					terminals.push_back(word);
-				word.clear();
-			}
-			while (file.peek() != ']')
-			{
-				word += file.get();
-			}
-			word += file.get(); // захватываем ']'
-			if (find(terminals.begin(), terminals.end(), word) == terminals.end())
-				terminals.push_back(word);
-			rule.push_back(word);
-			word.clear();
-			break;
-
-		case '<':
-			// Обработка нетерминала в угловых скобках
-			if (!word.empty())
-			{
-				if (find(terminals.begin(), terminals.end(), word) == terminals.end())
-					terminals.push_back(word);
-				rule.push_back(word);
-				word.clear();
-			}
-			while (file.peek() != '>')
-			{
-				word += file.get();
-			}
-			word += file.get(); // захватываем '>'
-			rule.push_back(word);
-			word.clear();
-			break;
-
-		default:
-			// Добавление символа к текущему слову
-			word += file.get();
-			break;
-		}
-
-		// Обработка конца файла
-		if (file.peek() == EOF)
-		{
-			if (!word.empty())
-			{
-				rule.push_back(word);
-			}
-			if (map_rules.find(key) == map_rules.end())
-				map_rules[key] = { rule };
-			else
-				map_rules[key].push_back(rule);
-
-			if (!word.empty() && find(terminals.begin(), terminals.end(), word) == terminals.end())
-				terminals.push_back(word);
-			word.clear();
-			rule.clear();
-		}
-	}
-
-	Remove_Duplicate_Eps();
-}
-
-// Удаляет повторяющиеся [eps] из всех правил в map_rules
-void Sintax::Remove_Duplicate_Eps()
-{
-	for (auto& [key, rules] : map_rules)
-	{
-		for (auto& rule : rules)
-		{
-			bool eps_found = false;
-			// Используем erase-remove idiom для удаления всех повторных [eps]
-			rule.erase(
-				std::remove_if(rule.begin(), rule.end(),
-					[&eps_found](const std::string& symbol) {
-						if (symbol == "[eps]") {
-							if (!eps_found) {
-								eps_found = true;
-								return false; // оставить первый [eps]
-							}
-							return true; // удалить повторные [eps]
-						}
-						return false;
-					}),
-				rule.end());
-		}
-	}
-}
-
-// Сообщение об ошибке в правиле и завершение работы
-void Sintax::Rule_Error(string error_text, fstream& file)
-{
-	cerr << "Error: " << error_text << endl;
-	while (file.peek() != '\n' && file.peek() != EOF)
-		file.get(); // пропуск до конца строки
-	exit(EXIT_FAILURE);
 }
 
 // Сообщение об ошибке и завершение работы
@@ -250,130 +74,101 @@ void Sintax::Error(string error_text)
 	exit(EXIT_FAILURE);
 }
 
-// Поиск всех нетерминалов в файле
-void Sintax::Find_Nonterminals(fstream& file)
-{
-	int start_ptr = ios::cur;
-	file.seekg(0, ios::beg);
-	char cur_ch;
-
-	while (file.peek() != EOF)
-	{
-		cur_ch = file.get();
-		if (cur_ch == '<')
-		{
-			string nonterminal;
-			while (cur_ch != '>')
-			{
-				cur_ch = file.get();
-				if (cur_ch != '>' && cur_ch != '\n' && cur_ch != ' ')
-					nonterminal += cur_ch;
-			}
-			if (find(nonterminals.begin(), nonterminals.end(), nonterminal) == nonterminals.end())
-				nonterminals.push_back(nonterminal);
-		}
-	}
-
-	file.seekg(start_ptr, ios::beg);
-}
-
 // Создание вспомогательных таблиц для синтаксического анализа
-vector<Sintax::auxiliary_table> Sintax::Create_Tables(string start_nonterminal_)
+vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 {
-	string start_nonterminal = start_nonterminal_; // Начальный нетерминал грамматики
-
-	// Проверка наличия стартового нетерминала
-	while (find(nonterminals.begin(), nonterminals.end(), start_nonterminal) == nonterminals.end())
-	{
-		cout << "Enter the starting nonterminal" << endl << "-> ";
-		cin >> start_nonterminal;
-	}
-
-	vector<auxiliary_table> table;
+	string start_nonterminal = "<S>";
+	vector<auxiliary_table> rules;
 	vector<canonical_table> start_table;
 	list<for_goto> table_goto_args;
 
 	// Формирование стартовой таблицы
 	start_table = Start_Table(start_nonterminal);
 
-	Formating_Table(start_table);
-
-	table.push_back(auxiliary_table(start_table, for_goto(-1, start_nonterminal)));
+	rules.push_back(auxiliary_table(start_table, for_goto(-1, start_nonterminal), 0));
 
 	// Поиск всех нетерминалов, следующих за точкой в стартовой таблице
-	for (auto& i : Find_All_Goto(start_table))
+	for (auto& i : Find_All_Goto(start_table, 0))
 	{
 		if (find(table_goto_args.begin(), table_goto_args.end(), i) == table_goto_args.end())
 		{
 			table_goto_args.push_back(i);
-			//cout << "Find goto: " << i.number_table << " " << i.symbol << endl;
 		}
 	}
 
-	int counter = 0;
+	// Основной цикл по созданию всех таблиц
 	for (auto& i : table_goto_args)
 	{
-		vector<canonical_table> temp;
-		for (auto& j : table)
-		{
-			for (auto& t : j.table)
-			{
-				if (t.number_table == i.number_table)
-					temp.push_back(t);
-			}
-		}
-		
-		// Пустые правила не трогаем
-		if (i.symbol == "[eps]")
-			continue;
-		
-		vector<canonical_table> res = GOTO(i, temp, i.number_table);
+		vector<canonical_table> temp_vct;
+		canonical_table temp_ct;
 
-		// Форматируем таблицу
-		Formating_Table(res);
+		// Пустые правила не трогаем
+		if (i.symbol == "eps")
+			continue;
+
+		// Вычисление GOTO для текущего аргумента
+		vector<canonical_table> goto_result = GOTO(i, rules[i.number_table].rules);
 
 		// Проверка на наличие уже существующей таблицы с таким же содержимым
 		auto find_b = find_if(
-			table.begin(),
-			table.end(),
-			[&res](const auxiliary_table& a) 
+			rules.begin(),
+			rules.end(),
+			[&goto_result](const auxiliary_table& a) 
 			{
-				return a.table == res;
+				return a.rules == goto_result;
 			});
 
 		// Если такая таблица уже существует, пропускаем её
-		if (find_b != table.end())
+		if (find_b != rules.end())
 		{
+			not_included_tables.push_back(auxiliary_table(goto_result, i, (*find_b).number_table));
 			continue;
 		}
 		// Если не существует, создаём новую таблицу
+		rules.push_back(auxiliary_table(goto_result, i, rules.size()));
 		
-		counter++;
-
-		for (auto& j : res)
-		{
-			j.number_table = counter;
-		}
-
-		table.push_back(auxiliary_table(res, i));
-
 
 		// Высчитываение аргументов goto для последующих таблиц 
-		list<canonical_table> result_list(res.begin(), res.end());
+		list<canonical_table> result_list(goto_result.begin(), goto_result.end());
 		for (auto& j : result_list)
 		{
 			if (j.rule.size() > j.dot)
 			{
-				if (find(table_goto_args.begin(), table_goto_args.end(), for_goto(j.number_table, j.rule[j.dot])) == table_goto_args.end())
+				if (find(table_goto_args.begin(), table_goto_args.end(), for_goto(rules.size() - 1, j.rule[j.dot])) == table_goto_args.end())
 				{
-					table_goto_args.push_back(for_goto(j.number_table, j.rule[j.dot]));
+					table_goto_args.push_back(for_goto(rules.size() - 1, j.rule[j.dot]));
 				}
 			}
 			
 		}
 	}
 
-	return table;
+	//Замена все пустышки в following на "eps"
+	for (int i = 0; i < rules.size(); i++)
+	{
+		for (int j = 0; j < rules[i].rules.size(); j++)
+		{
+			for (int t = 0; t < rules[i].rules[j].following.size(); t++)
+			{
+				if (rules[i].rules[j].following[t][0] == '\0')
+					rules[i].rules[j].following[t] = "eps";
+			}
+		}
+	}
+
+	return rules;
+}
+
+vector<vector<string>> Sintax::All_FIRSTs()
+{
+	vector<vector<string>> result;
+	for (auto& i : nonterminals)
+	{
+		vector<string> first_nont = FIRST_One(i, {});
+		result.push_back(first_nont);
+	}
+	
+	return result;
 }
 
 // Вычисление множества FIRST для нетерминала
@@ -388,27 +183,28 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 	vector<string> res;
 	string words;
 
-	if (map_rules.size() == 0)
+	if (vec_rules.size() == 0)
 		Error("There are no rules");
 
-	for (auto& i : map_rules[nonterminal])
+	int temp_index = find_by_key_begin(vec_rules, nonterminal);
+	for (int i = temp_index; i < find_by_key_end(vec_rules, nonterminal); i++)
 	{
 		words.clear();
 		// Предпологаем, что лишние eps удалены 
-		if (i.size() == 1 && i[0] == "[eps]")
-			res.push_back({ "[eps]" });
-		for (auto& j : i)
+		if (vec_rules[i].second.size() == 1 && vec_rules[i].second[0] == "eps")
+			res.push_back({ "eps" });
+		for (int j = 0; j < vec_rules[i].second.size(); j++)
 		{
-			if (IsTerminal(j))
+			if (IsTerminal(vec_rules[i].second[j]))
 			{
-				if (j == "[eps]")
+				if (vec_rules[i].second[j] == "eps")
 					continue;
-				words = j;
+				words = vec_rules[i].second[j];
 			}
 			else
 			{
 				// Передаём visited дальше!
-				vector<string> temp = FIRST_One(j, visited);
+				vector<string> temp = FIRST_One(vec_rules[i].second[j], visited);
 
 				for (auto& v : temp)
 					res.push_back(v);
@@ -431,168 +227,149 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 	return res;
 }
 
-// Вычисляет множество FIRST для элементов, следующих за позицией t в правиле r
-vector<vector<string>> Sintax::FIRST_One_for_next(const vector<string>::const_iterator it, const vector<string>& r)
-{
-	if (r.size() == 0)
-		return {};
-	vector<vector<string>> result;
-	vector<string> prefix;
-
-	auto t = it; // Создаём итератор для обхода
-	++t; // Переходим к следующему элементу после t
-
-	// Если достигли конца правила — возвращаем эпсилон
-	if (t == r.end())
-	{
-		result.push_back({ "[eps]" });
-		return result;
-	}
-
-	// Проходим по всем элементам после t
-	while (t != r.end())
-	{
-		if (IsTerminal(*t))
-		{
-			// Если встретили терминал (кроме [eps]), добавляем его и завершаем
-			if (*t != "[eps]")
-			{
-				prefix.push_back(*t);
-				result.push_back(prefix);
-				return result;
-			}
-			// Если [eps], просто пропускаем
-		}
-		else
-		{
-			// Для нетерминала вычисляем его FIRST
-			vector<vector<string>> firstSet = { FIRST_One(*t, {}) };
-
-			// Для каждого множества из FIRST добавляем к префиксу
-			for (const auto& first : firstSet)
-			{
-				vector<string> combined = prefix;
-				combined.insert(combined.end(), first.begin(), first.end());
-				result.push_back(combined);
-			}
-
-			// Проверяем, есть ли [eps] среди FIRST
-			bool hasEps = false;
-			for (const auto& first : firstSet)
-			{
-				if (!first.empty() && first.front() == "[eps]")
-				{
-					hasEps = true;
-					break;
-				}
-			}
-			// Если нет [eps], дальше не идём
-			if (!hasEps)
-				return result;
-		}
-		++t;
-	}
-
-	// Если дошли до конца, добавляем [eps]
-	result.push_back({ "[eps]" });
-	return result;
-}
-
-void Sintax::Print_Firsts(vector<vector<vector<string>>> f)
+void Sintax::Print_Firsts(vector<vector<string>> f)
 {
 	int count = 0;
 	for (auto& i : f)
 	{
-		cout << "FIRST(" << nonterminals[count++] << ") = " << endl;
+		int temp_counter = 0;
+		cout << "FIRST(" << nonterminals[count++] << ") = {";
 		for (auto& j : i)
 		{
-			for (auto& k : j)
-			{
-				cout << k << " ";
-			}
-			cout << endl;
+			if (temp_counter++ < i.size() - 1)
+				cout << j << ", ";
+			else
+				cout << j;
 		}
-		cout << endl;
+		cout << "}" << endl;
 	}
 	cout << endl;
 }
 
+void Sintax::Write_Firsts(vector<vector<string>> f, ofstream& file)
+{
+	int count = 0;
+	for (auto& i : f)
+	{
+		int temp_counter = 0;
+		file << "FIRST(" << nonterminals[count++] << ") = {";
+		for (auto& j : i)
+		{
+			if (temp_counter++ < i.size() - 1)
+				file << j << ", ";
+			else
+				file << j;
+		}
+		file << "}" << endl;
+	}
+	file << endl;
+}
+
 void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& file)
 {
-	file << "   |" << "f";
-	for (int i = 0; i < terminals.size(); i++)
-		file << " \t";
-	file << "|| g" << endl;
+	int min_size = 3;
 
-	file << "  |";
+	file << "   |f";
+	for (int i = 0; i < terminals.size() - 1; i++)
+	{
+		for (int j = 0; j < (terminals[i].size() > min_size ? terminals[i].size() : min_size); j++)
+			file << " ";
+		file << " ";
+	}
+	for (int j = 0; j < (terminals[terminals.size() - 1].size() > min_size ? terminals[terminals.size() - 1].size() : min_size); j++)
+		file << " ";
+	file << "||g" << endl;
+
+	file << "   |";
+
 
 	for (int i = 0; i < terminals.size(); i++)
 	{
-		file << terminals[i] << "\t |";
+		file << terminals[i];
+		for (int j = terminals[i].size(); j < min_size; j++)
+			file << " ";
+		file << "|";
 	}
 
 	file << "||";
 
 	for (int i = 0; i < nonterminals.size(); i++)
-		file << nonterminals[i] << "\t |";
+	{
+		file << nonterminals[i];
+		for (int j = nonterminals[i].size(); j < min_size; j++)
+			file << " ";
+		file << "|";
+	}
 
 	for (int i = 0; i < terminals.size(); i++)
 	{
-		if (terminals[i] == "[eps]")
+		if (terminals[i] == "eps")
 			continue;
-		file << terminals[i] << "\t |";
+		file << terminals[i];
+		for (int j = terminals[i].size(); j < min_size; j++)
+			file << " ";
+		file << "|";
 	}
 
 	file << endl;
 
 	for (int i = 0; i < TabAn.rows.size(); i++)
 	{
-		file << TabAn.rows[i].number_row << "\t |";
+		//Номер строки
+		file << TabAn.rows[i].number_row;
+		for (int v = to_string(TabAn.rows[i].number_row).size(); v < min_size; v++)
+			file << " ";
+		file << "|";
+
+		//f
 		for (int j = 0; j < TabAn.rows[i].f.size(); j++)
 		{
-			file << TabAn.rows[i].f[j] << "\t |";
+			file << TabAn.rows[i].f[j];
+			int spaces1 = terminals[j].size() > min_size ? terminals[j].size() : min_size;
+			for (int v = TabAn.rows[i].f[j].size(); v < spaces1; v++)
+				file << " ";
+			file << "|";
 		}
+
 		file << "||";
-		for (int j = 0; j < TabAn.rows[i].g.size(); j++)
+
+		//Нетерминалы g
+		for (int j = 0; j < nonterminals.size(); j++)
 		{
-			file << TabAn.rows[i].g[j] << "\t |";
+			if (TabAn.rows[i].g[j] == -1)
+				file << "- ";
+			else
+				file << TabAn.rows[i].g[j];
+			int spaces2 = nonterminals[j].size() > min_size ? nonterminals[j].size() : min_size;
+			for (int v = to_string(TabAn.rows[i].g[j]).size(); v < spaces2; v++)
+				file << " ";
+			file << "|";
+		}
+
+		//Терминалы g (без eps)
+		for (int j = nonterminals.size(); j < (nonterminals.size() + terminals.size() - 1) /*без эпс*/; j++)
+		{
+			if (TabAn.rows[i].g[j] == -1)
+				file << "- ";
+			else
+				file << TabAn.rows[i].g[j];
+			int spaces3 = terminals[j - nonterminals.size() + (j - nonterminals.size() >= Terminal_number("eps") ? 1 : 0)].size() > min_size ? terminals[j - nonterminals.size() + (j - nonterminals.size() >= Terminal_number("eps") ? 1 : 0)].size() : min_size;
+			for (int v = to_string(TabAn.rows[i].g[j]).size(); v < spaces3; v++)
+				file << " ";
+			file << "|";
 		}
 		file << endl;
 	}
 }
 
-
-
-// Декартово произведение двух списков списков строк
-vector<string> Sintax::Cartesian_Product(vector<string> to, vector<string> from)
+void Sintax::Print_Stack(stack<string> st)
 {
-	vector<string> result;
-	if (to.size() == 0)
+	stack<string> temp_st = st;
+	while (!temp_st.empty())
 	{
-		result = from;
+		cout << temp_st.top() << " ";
+		temp_st.pop();
 	}
-	for (const auto& prefix : to)
-	{
-		for (const auto& suffix : from)
-		{
-			result.push_back(prefix + suffix);
-		}
-	}
-	return result;
-}
-
-// Обрезка списков до длины n
-vector<string> Sintax::Clipping(int n, vector<string> from)
-{
-	vector<string> result;
-	for (const auto& str : from)
-	{
-		if (str.size() > n)
-			result.push_back(str.substr(0, n));
-		else
-			result.push_back(str);
-	}
-	return result;
 }
 
 vector<string> Sintax::Delete_Repetitions(vector<string> from)
@@ -619,7 +396,7 @@ vector<string> Sintax::Replacing_Eps(vector<string> to, vector<string> from)
 
 	for (auto& i : res)
 	{
-		if (i == "[eps]")
+		if (i == "eps")
 		{
 			i = *it;
 			it++;
@@ -640,45 +417,16 @@ vector<string> Sintax::Replacing_Eps(vector<string> to, vector<string> from)
 // Проверка, является ли строка нетерминалом
 bool Sintax::IsNonterminal(string s)
 {
-	if (s[0] == '<' && s[s.size() - 1] == '>')
+	if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
 		return true;
-		//if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
-		//	return true;
-		//else
-		//	Error("Missing nonterminal");
-	else
-		if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
-			Error("Incorrect nonterminal");
 	return false;
 }
 
 // Проверка, является ли строка терминалом
 bool Sintax::IsTerminal(string s)
 {
-	if (!IsNonterminal(s))
+	if (find(terminals.begin(), terminals.end(), s) != terminals.end())
 		return true;
-		//if (find(terminals.begin(), terminals.end(), s) != terminals.end())
-		//	return true;
-		//else
-		//	Error("Missing terminal");
-	else
-		if (find(terminals.begin(), terminals.end(), s) != terminals.end())
-			Error("Incorrect terminal");
-	return false;
-}
-
-// Проверка, является ли строка ключевым словом
-bool Sintax::IsKeyword(string s)
-{
-	if (s[0] == '[' && s[s.size() - 1] == ']')
-		return true;
-		/*if (find(Keywords.begin(), Keywords.end(), s) != Keywords.end())
-			return true;
-		else
-			Error("Missing keyword");*/
-	else
-		if (find(Keywords.begin(), Keywords.end(), s) != Keywords.end())
-			Error("Incorrect keyword");
 	return false;
 }
 
@@ -694,7 +442,7 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 
 	// Объединение правил с разными following в одно правило
 	list<canonical_table> list_can_t;
-	for (auto j : can_t)
+	for (auto& j : can_t)
 	{
 		list_can_t.push_back(j);
 	}
@@ -757,8 +505,12 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 {
 	list<canonical_table> temp_res;
-	for (auto& i : map_rules[start_nonterminal])
-		temp_res.push_back(canonical_table(start_nonterminal, 0, i, { "[eps]" }, 0));
+	vector<canonical_table> res;
+
+	for (int i = find_by_key_begin(vec_rules, start_nonterminal); i < find_by_key_end(vec_rules, start_nonterminal); i++)
+	{
+		temp_res.push_back(canonical_table(start_nonterminal, 0, vec_rules[i].second, { "eps" }));
+	}
 
 	for (auto& i : temp_res)
 	{
@@ -768,52 +520,42 @@ vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 
 		if (IsNonterminal(*t))
 		{
-			for (auto& j : map_rules[*t])
+			for (int j = find_by_key_begin(vec_rules, *t); j < find_by_key_end(vec_rules, *t); j++)
 			{
 				if (i.rule.size() == 0)
 					break;
-				for (auto& f : FIRST_One_for_next(t, i.rule))
-				{
-					temp_res.push_back(canonical_table((*t), 0, j, f, 0));
-				}
+				temp_res.push_back(canonical_table((*t), 0, vec_rules[j].second, Firsts[Nonterminal_number(*(t + 1))]));
+				
 			}
 		}
 	}
 
-	vector<canonical_table> res;
 	for (auto& i : temp_res)
 	{
 		res.push_back(i);
 	}
 
-	return res;
+	return Formating_Table(res);
 }
 
-vector<Sintax::for_goto> Sintax::Find_All_Goto(const vector<canonical_table>& can_t)
+vector<Sintax::for_goto> Sintax::Find_All_Goto(const vector<canonical_table>& can_t, int number_table)
 {
 	vector<for_goto> res;
 
 	for (auto& i : can_t)
 	{
 		if (i.rule.size() > i.dot)
-			res.push_back(for_goto(i.number_table, i.rule[i.dot]));
+			res.push_back(for_goto(number_table, i.rule[i.dot]));
 	}
 
 	return res;
 }
 
-Sintax::for_goto Sintax::Find_One_Goto(const canonical_table& can_t)
-{
-	if (can_t.rule.size() > can_t.dot)
-		return (for_goto(can_t.number_table, can_t.rule[can_t.dot]));
-	return for_goto(-1, " ");
-}
-
-void Sintax::Print_Small_Table(const auxiliary_table& can_t)
+void Sintax::Print_Сanonical_Table_System(const auxiliary_table& can_t)
 {
 	
-	cout << "A" << (*can_t.table.begin()).number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
-	for (auto& i : can_t.table)
+	cout << "A" << can_t.number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
+	for (auto& i : can_t.rules)
 	{
 
 		cout << "[" << i.nonterminal << " -> ";
@@ -838,13 +580,13 @@ void Sintax::Print_Small_Table(const auxiliary_table& can_t)
 	cout << "}" << endl << endl;
 }
 
-void Sintax::Write_Small_Table(const auxiliary_table& can_t, ofstream& file)
+void Sintax::Write_Сanonical_Table_System(const auxiliary_table& can_t, ofstream& file)
 {
 	if (can_t.goto_from.number_table != -1)
-		file << "A" << (*can_t.table.begin()).number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
+		file << "A" << can_t.number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
 	else
-		file << "A" << (*can_t.table.begin()).number_table << " = {" << endl;
-	for (auto& i : can_t.table)
+		file << "A" << can_t.number_table << " = {" << endl;
+	for (auto& i : can_t.rules)
 	{
 
 		file << "[" << i.nonterminal << " -> ";
@@ -870,118 +612,164 @@ void Sintax::Write_Small_Table(const auxiliary_table& can_t, ofstream& file)
 }
 
 // Реализация функции GOTO для LR(1)-анализатора
-vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t, int number_table)
+vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t)
 {
-	// Множество уникальных ситуаций
 	vector<canonical_table> res;
-
-	// Очередь для обработки новых ситуаций
 	list<canonical_table> queue;
 
-	// Сдвигаем точку вправо для всех ситуаций, где после точки стоит символ
-	for (const auto& i : can_t)
+	// Сдвигаем точку на символ args.symbol
+	for (const auto& item : can_t)
 	{
-		if (i.number_table != number_table)
-			continue;
-		if (i.rule.size() <= i.dot)
-			continue;
-
-		// Проверяем, совпадает ли символ после точки с искомым символом
-		if (i.rule[i.dot] == args.symbol)
+		if (item.dot < item.rule.size() && item.rule[item.dot] == args.symbol)
 		{
-			// Создаём новый элемент с увеличенным dot
-			canonical_table new_item = canonical_table(i.nonterminal, i.dot + 1, i.rule, i.following, i.number_table);
-
-
-			// Проверяем, не добавлен ли уже этот элемент
-			if (find(res.begin(), res.end(), new_item) == res.end()) 
+			canonical_table moved = item;
+			moved.dot++;
+			if (find(res.begin(), res.end(), moved) == res.end())
 			{
-				res.push_back(new_item);
-				queue.push_back(new_item);
+				res.push_back(moved);
+				queue.push_back(moved);
 			}
 		}
 	}
 
-	// Обрабатываем только новые ситуации из очереди
+	// Closure
 	while (!queue.empty())
 	{
-		auto it = queue.front();
+		canonical_table current = queue.front();
 		queue.pop_front();
 
-		// Проверяем, не достигли ли конца правила и не является ли следующий символ нетерминалом
-		if (it.rule.size() > it.dot && IsNonterminal(it.rule[it.dot]))
+		if (current.dot < current.rule.size() && IsNonterminal(current.rule[current.dot]))
 		{
-			string B = it.rule[it.dot];
-			for (const auto& rule : map_rules[B])
+			string B = current.rule[current.dot];
+
+			// Вычисляем lookahead для новых правил B
+			vector<string> lookahead;
+			if (current.dot + 1 < current.rule.size())
 			{
-				for (auto firsts : FIRST_One_for_next(it.rule.begin() + it.dot, it.rule))
+				// β = символы после B
+				vector<string> beta(current.rule.begin() + current.dot + 1, current.rule.end());
+
+				// FIRST(β)
+				for (const auto& sym : beta)
 				{
-					vector<string> temp = firsts;
-					temp = Replacing_Eps(temp, it.following);//😦
-					canonical_table new_item(B, 0, rule, temp, it.number_table);
-
-					// Проверяем, не добавлен ли уже этот элемент
-					if (std::find(res.begin(), res.end(), new_item) == res.end())
+					if (IsTerminal(sym))
 					{
-						res.push_back(new_item);
-						queue.push_back(new_item); // только новые!
+						lookahead.push_back(sym);
+						break;
 					}
+					else
+					{
+						for (const auto& x : Firsts[Nonterminal_number(sym)])
+							lookahead.push_back(x);
 
+						// если FIRST(sym) не содержит eps, дальше не идём
+						if (find(Firsts[Nonterminal_number(sym)].begin(),
+							Firsts[Nonterminal_number(sym)].end(),
+							"eps") == Firsts[Nonterminal_number(sym)].end())
+							break;
+					}
+				}
+
+				// Если β может породить eps, добавляем lookahead из текущего
+				if (find(lookahead.begin(), lookahead.end(), "eps") != lookahead.end())
+				{
+					lookahead.erase(remove(lookahead.begin(), lookahead.end(), "eps"), lookahead.end());
+					lookahead.insert(lookahead.end(), current.following.begin(), current.following.end());
+				}
+			}
+			else
+			{
+				// Если после B ничего нет, lookahead = current.following
+				lookahead = current.following;
+			}
+
+			// Удаляем дубликаты
+			lookahead = Delete_Repetitions(lookahead);
+
+			// Добавляем все правила вида B → γ
+			for (int r = find_by_key_begin(vec_rules, B); r < find_by_key_end(vec_rules, B); r++)
+			{
+				canonical_table new_item(B, 0, vec_rules[r].second, lookahead);
+
+				if (find(res.begin(), res.end(), new_item) == res.end())
+				{
+					res.push_back(new_item);
+					queue.push_back(new_item);
 				}
 			}
 		}
 	}
 
-	return res;
+	return Formating_Table(res);
 }
+
 
 
 Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabAn)
 {
-
+	int find_rule = -1;
 	//Создание f
-	for (int i = 0; i < tables.size(); i++)
+	for (int i = 0; i < сanonical_table_system.size(); i++)
 	{
-
 		for (int j = 0; j < terminals.size(); j++)
 		{
-			for (auto& v : tables[i].table)
+			for (auto& v : сanonical_table_system[i].rules)
 			{
-
-				if (v.dot == v.rule.size() && v.following[0] == "[eps]")
+				if (v.dot == v.rule.size() && v.nonterminal == "<S>")
 				{
-					//Допуск
-					TabAn.rows[i].f[j] = "a";
+					//Допуск, скорее всего following будет один = eps, если это так, то оптимизировать!
+					for (auto& w : v.following)
+					{
+						IsCellFull(i, Terminal_number(w), "a");
+						TabAn.rows[i].f[Terminal_number(w)] = "a";
+					}
+				}
+				else if (v.dot + 1 == v.rule.size() && v.rule[v.dot] == "eps")
+				{
+					find_rule = FindRuleInRow(v);
+
+					for (auto& w : v.following)
+					{
+						TabAn.rows[i].f[Terminal_number(w)] = to_string(find_rule);
+					}
 				}
 				else if (v.dot == v.rule.size())
 				{
-					int find_rule = -1;
-					int count_rule = 0;
-					for (auto& w : map_rules[v.nonterminal])
+					find_rule = FindRuleInRow(v);
+
+					for (auto& k : v.following)
 					{
-						if (v.rule == w)
+						int pos = Terminal_number(k);
+						if (pos == terminals.size())
 						{
-							find_rule = count_rule;
+							throw(string("Error in finding terminal"));
 						}
-						count_rule++;
-					}
-					if (find_rule == -1)
-					{
-						throw("Error in finding rules");
-					}
+							
+						IsCellFull(i, pos, to_string(find_rule));
 
-					TabAn.rows[i].f[j] = to_string(find_rule);
+						TabAn.rows[i].f[pos] = to_string(find_rule);
+					}
 				}
-
-				else if (v.rule[v.dot] == terminals[j])
+				else if (IsNonterminal(v.rule[v.dot]))
 				{
 					//Переход
+					for (auto& w : Firsts[Nonterminal_number(v.rule[v.dot])])
+					{
+						if (w == "eps")
+							continue;
+						IsCellFull(i, Terminal_number(w), "t");
+						TabAn.rows[i].f[Terminal_number(w)] = "t";
+					}
+				}
+				else if (IsTerminal(v.rule[v.dot]) && v.rule[v.dot] == terminals[j])
+				{
+					//Переход
+					IsCellFull(i, j, "t");
 					TabAn.rows[i].f[j] = "t";
 				}
 				else
 				{
 					//Ничего
-					TabAn.rows[i].f[j] = "-";
 				}
 			}
 		}
@@ -990,38 +778,227 @@ Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabA
 	//Создание g
 	for (int i = 0; i < nonterminals.size(); i++)
 	{
-		for (int j = 0; j < tables.size(); j++)
+		// С 1 тк в <S> нет переходов
+		for (int j = 1; j < сanonical_table_system.size(); j++)
 		{
-			if (nonterminals[i] == tables[j].goto_from.symbol)
+			if (nonterminals[i] == сanonical_table_system[j].goto_from.symbol)
 			{
-				TabAn.rows[j].g[i] = tables[j].goto_from.number_table;
+				TabAn.rows[сanonical_table_system[j].goto_from.number_table].g[i] = j;
 			}
 		}
+		for (int j = 0; j < not_included_tables.size(); j++)
+		{
+			if (nonterminals[i] == not_included_tables[j].goto_from.symbol)
+			{
+				TabAn.rows[not_included_tables[j].goto_from.number_table].g[i] = not_included_tables[j].number_table;
+			}
+		}
+		
 	}
 	bool flag_eps = 0;
 	for (int i = nonterminals.size(); i < nonterminals.size() + terminals.size(); i++)
 	{
-		if (terminals[i - nonterminals.size()] == "[eps]")
+		if (terminals[i - nonterminals.size()] == "eps")
 		{
 			flag_eps = 1;
 		}
 
-		for (int j = 0; j < tables.size() - 1; j++)
+		// С 1 тк в <S> нет переходов
+		for (int j = 1; j < сanonical_table_system.size() - 1; j++)
 		{
-			if (terminals[i - nonterminals.size()] == tables[j].goto_from.symbol)
+			if (terminals[i - nonterminals.size()] == сanonical_table_system[j].goto_from.symbol)
 			{
-				TabAn.rows[j].g[i - flag_eps] = tables[j].goto_from.number_table;
+				TabAn.rows[сanonical_table_system[j].goto_from.number_table].g[i - flag_eps] = j;
+			}
+		}
+		for (int j = 0; j < not_included_tables.size(); j++)
+		{
+			if (terminals[i - nonterminals.size()] == not_included_tables[j].goto_from.symbol)
+			{
+				TabAn.rows[not_included_tables[j].goto_from.number_table].g[i - flag_eps] = not_included_tables[j].number_table;
 			}
 		}
 	}
 
+
 	return TabAn;
+}
+
+string Sintax::Word_processing(string word)
+{
+	string result;
+
+	if (word.empty())
+		throw (string("Empty word"));
+
+	if (IsTerminal(word))
+	{
+		result = word;
+	}
+	else if (!isdigit(word[0]))
+	{
+		result = "V";
+	}
+	else
+	{
+		result = "C";
+	}
+
+	return result;
+}
+
+bool Sintax::Processing_incoming_code(const string file_name)
+{
+	string word;
+	fstream file(file_name);
+	if (!file.is_open())
+	{
+		cerr << "Error opening file: " << file_name << endl;
+		return false;
+	}
+	int T = 0;
+	if (file.eof())
+		return true;
+	file >> word;
+	stack<string> action_stack;
+	action_stack.push("0");
+	vector<int> rules_used;
+
+	///TEST///
+	try 
+	{
+		while (action_stack.size() >= 1)
+		{
+			
+			word = Word_processing(word);
+			///TEST///
+			cout << "." << word << " " << T << " || ";
+			Print_Stack(action_stack);
+			cout << endl;
+			///TEST///
+
+			int term_num = Terminal_number(word);
+			string action_cell = TabAn.rows[T].f[term_num];
+
+			if (action_cell == "t")
+			{
+				action_stack.push(word);
+				T = TabAn.rows[T].g[nonterminals.size() + term_num - ((term_num < Terminal_number("eps")) ? 0 : 1)]; // В g нет eps
+				action_stack.push(to_string(T));
+				if (file.eof())
+					word = "eps";
+				else
+					file >> word;
+			}
+			else if (action_cell == "a")
+				return true;
+			else if (isdigit(action_cell[0]) && stoi(action_cell) >= 0 && stoi(action_cell) < TabAn.rows.size())
+			{
+				int rule_idx = stoi(action_cell);
+				//Удаляем из стека 2 * |правило|
+				if (vec_rules[rule_idx].second[0] != "eps")
+				{
+					for (int i = 0; i < 2 * vec_rules[rule_idx].second.size(); i++)
+					{
+						if (action_stack.empty())
+							throw(string("Stack underflow during reduction"));
+						action_stack.pop();
+					}
+				}
+
+				int temp_T = stoi(action_stack.top());
+				action_stack.push(vec_rules[rule_idx].first);
+				T = TabAn.rows[temp_T].g[Nonterminal_number(vec_rules[rule_idx].first)];
+				action_stack.push(to_string(T));
+			}
+			else
+				throw(string("Wrong command"));
+
+			///TEST///
+			cout << ".." << word << " " << T << " || ";
+			Print_Stack(action_stack);
+			cout << endl;
+			///TEST///
+
+		}		
+
+	}
+	catch (string err)
+	{
+		cerr << "Word " << word << " can't be recognized" << endl;
+		cerr << err << endl;
+		return false;
+	}
+	return false;
+}
+
+int Sintax::Terminal_number(string terminal)
+{
+	int res = find(terminals.begin(), terminals.end(), terminal) - terminals.begin();
+
+	return res;
+}
+
+int Sintax::Nonterminal_number(string nonterminal)
+{
+	int res = find(nonterminals.begin(), nonterminals.end(), nonterminal) - nonterminals.begin();
+
+	return res;
+}
+
+int Sintax::find_by_key_begin(const vector<pair<string, vector<string>>>& vec, const string& key)
+{
+	for (int i = 0; i < vec.size(); i++)
+	{
+		if (vec[i].first == key)
+			return i;
+	}
+
+	return -1;
+}
+
+int Sintax::find_by_key_end(const vector<pair<string, vector<string>>>& vec, const string& key)
+{
+	for (int i = vec.size() - 1; i >= 0; i--)
+	{
+		if (vec[i].first == key)
+			return i + 1;
+	}
+	return -1;
+}
+
+bool Sintax::IsCellFull(int pos1, int pos2, string сontent)
+{
+	if (TabAn.rows[pos1].f[pos2] != сontent && TabAn.rows[pos1].f[pos2] != "-" && TabAn.rows[pos1].f[pos2].size() != 0)
+	{
+		cerr << "Conflict in table f: T" << pos1 << " on " << terminals[pos2] << " | " << TabAn.rows[pos1].f[pos2] << " and " << сontent << endl;
+		return true;
+	}
+	return false;
+}
+
+int Sintax::FindRuleInRow(canonical_table rule)
+{
+	int find_rule = -1;
+	for (int counter_rules = 0; counter_rules < vec_rules.size(); counter_rules++)
+	{
+		if (rule.nonterminal == vec_rules[counter_rules].first && rule.rule == vec_rules[counter_rules].second)
+		{
+			find_rule = counter_rules;
+			break;
+		}
+	}
+	if (find_rule == -1)
+	{
+		throw(string("Error in finding rules"));
+	}
+	return find_rule;
 }
 
 // Печать всех правил грамматики
 void Sintax::Print_Rules()
 {
-	for (auto it = map_rules.begin(); it != map_rules.end(); it++)
+	for (auto it = vec_rules.begin(); it != vec_rules.end(); it++)
 	{
 		for (const auto& rule : it->second)
 		{
@@ -1039,16 +1016,12 @@ void Sintax::Print_Rules()
 // Печать всех правил грамматики
 void Sintax::Write_Rules(ofstream& file)
 {
-	for (auto it = map_rules.begin(); it != map_rules.end(); it++)
+	for (auto it = vec_rules.begin(); it != vec_rules.end(); it++)
 	{
-		for (const auto& rule : it->second)
+		file << it->first << " -> ";
+		for (const auto& word : it->second)
 		{
-			file << it->first << " -> ";
-			for (const auto& word : rule)
-			{
-				file << word << " ";
-			}
-			file << endl;
+			file << word << " ";
 		}
 		file << endl;
 	}

@@ -1,0 +1,4 @@
+declare a as int ;
+;
+a = 5 ;
+while a rel b do ; od ;

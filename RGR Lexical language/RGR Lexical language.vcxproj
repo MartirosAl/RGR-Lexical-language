@@ -150,6 +150,9 @@
     <Text Include="Test2.txt" />
     <Text Include="Test3.txt" />
     <Text Include="Test5.txt" />
+    <Text Include="TestL1.txt" />
+    <Text Include="TestL2.txt" />
+    <Text Include="TestL3.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Test4.txt" />

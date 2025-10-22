@@ -9,10 +9,8 @@ int main()
    //result.Print_Table_Token();
 
    Sintax A;
-   //A.Print_Rules();
-   //A.Print_Nonterminals();
-   //A.Print_Terminals();
    
-
+   bool res = A.Processing_incoming_code("TestL3.txt");
+   cout << endl << res << endl;
    return 0;
 }

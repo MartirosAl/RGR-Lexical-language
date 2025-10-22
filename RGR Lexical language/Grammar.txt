@@ -1,6 +1,7 @@
 ﻿<S> -> <Ads> <Program>
 <Ads> -> [declare] <ads> [;] <Ads>
 <Ads> -> [declare] <ads> [;]
+<Ads> -> [eps]
 <ads> -> [V] [as] <TYPE> [,] <ads>
 <ads> -> [V] [as] <TYPE>
 <Program> -> <Operation> <Program>
@@ -22,7 +23,7 @@
 <byE> -> [by] <E>
 <byE> -> [eps]
 <if> -> [if] [(]<Test> [)] <Program> [else] <Program> [fi] [;]
-<if> -> [if] [(] <Test> [)] <Program> [,] [fi] [;]
+<if> -> [if] [(] <Test> [)] <Program> [fi] [;]
 <input> -> [input] [;]
 <print> -> [print] <E> [;]
 <label> -> [L]
@@ -47,3 +48,54 @@
 <Test> -> <E> [rel] <E>
 <TYPE> -> [int]
 <TYPE> -> [BigNumber]
+
+
+S -> Ads Program 
+Ads -> declare Aads ; Ads 
+Ads -> ''
+Aads -> tV as TYPE , Aads 
+Aads -> tV as TYPE 
+Program -> Operation Program 
+Operation -> ; 
+Operation -> Assignment
+Operation -> Wwhile 
+Operation -> Ffor 
+Operation -> Iif 
+Operation -> Iinput
+Operation -> Pprint 
+Operation -> Llabel 
+Operation -> Ttransition
+Operation -> Sselect
+Operation -> Eexception
+Operation -> Ccomment
+Assignment -> tV = E ; 
+Wwhile -> while E rel E do Program od ; 
+Ffor -> for tV from E to E BbyE do Program od ; 
+BbyE -> by E
+BbyE -> ''
+Iif -> if ( Test ) Program else Program fi ; 
+Iif -> if ( Test ) Program fi ; 
+Iinput -> input ; 
+Pprint -> print E ; 
+Llabel -> tL 
+Ttransition -> goto tL ; 
+Sselect -> select E in Ccase ni ; 
+Ccase -> case tC : Program Ccase 
+Ccase -> case tC : Program 
+Ccase -> otherwise : Program
+Eexception -> raise ; 
+Ccomment -> rem 
+E -> E + T 
+E -> E - T 
+E -> T 
+E -> ( E ) 
+T -> T * F 
+T -> T / F 
+T -> T % F 
+T -> F 
+F -> tV 
+F -> tC 
+F -> get ( E , E ) 
+Test -> E rel E 
+TYPE -> int 
+TYPE -> bignumber 
