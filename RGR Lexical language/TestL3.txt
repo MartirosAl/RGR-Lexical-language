@@ -1,4 +1,4 @@
-declare a as int ;
+declare a as int , b as int ;
 ;
 a = 5 ;
 while a > b do ; od ;

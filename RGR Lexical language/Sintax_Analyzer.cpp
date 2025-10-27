@@ -1028,7 +1028,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 
 			//TEST//
 			if (token_index < table_tokens.size())
-				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << " | size: " << size_program << endl << "stack: ";
 			else
 				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
 			Print_Attribute_Stack(action_stack);
@@ -1324,6 +1324,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 1: // {"<Ads>", {"declare", "<ads>", ";", "<Ads>"}}
 		del_rule(attribute_stack, number_rule);
+
+		if (table_variable.size() > declared_variables.size())
+			throw(string("Not all variables are declared"));
 		break;
 
 	case 2: // {"<Ads>", {"eps"}}
@@ -1395,11 +1398,23 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		break;
 
-	case 7: case 8: // {"<Operation>", {"<Assignment>"}} /  {"<Operation>", {";"}} 
+	case 7: // {"<Operation>", {";"}
+
 
 		del_rule(attribute_stack, number_rule);
 		result.program.push_back("");
 		break;
+
+	case 8: // {"<Operation>", {"<Assignment>"}}
+
+
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Assignment>
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		break;
+
 
 	case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18:// {"<Operation>", ...}
 		
@@ -1429,7 +1444,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 			throw(string("Type mismatch in assignment"));
 
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("pop " + (*adress_var1).first);
+		result.program.push_back("pop " + (*adress_var1).first);
 		break;
 
 	case 20: // {"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}}
