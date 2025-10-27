@@ -15,64 +15,64 @@ protected:
 
 	//Пара: нетерминал -> список правил (каждое правило — отдельная пара)
 	vector<pair<string, vector<string>>> vec_rules = {
-	{"<S>", {"<Ads>", "<Program>"}},
-	{"<Ads>", {"declare", "<ads>", ";", "<Ads>"}},
-	{"<Ads>", {"eps"}},
-	{"<ads>", {"V", "as", "<TYPE>", ",", "<ads>"}},
-	{"<ads>", {"V", "as", "<TYPE>", ";"}},
-	{"<Program>", {"<Operation>", "<Program>"}},
-	{"<Program>", {"eps"}},
-	{"<Operation>", {";"}},
-	{"<Operation>", {"<Assignment>"}},
-	{"<Operation>", {"<while>"}},
-	{"<Operation>", {"<for>"}},
-	{"<Operation>", {"<if>"}},
-	{"<Operation>", {"<input>"}},
-	{"<Operation>", {"<print>"}},
-	{"<Operation>", {"<label>"}},
-	{"<Operation>", {"<transition>"}},
-	{"<Operation>", {"<select>"}},
-	{"<Operation>", {"<exception>"}},
-	{"<Operation>", {"<comment>"}},
-	{"<Assignment>", {"V", "=", "<E>", ";"}},
-	{"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}},
-	{"<for>", {"for", "V", "from", "<E>", "to", "<E>", "<byE>", "do", "<Program>", "od", ";"}},
-	{"<byE>", {"by", "<E>"}},
-	{"<byE>", {"eps"}},
-	{"<if>", {"if", "(", "<Test>", ")", "<Program>", "else", "<Program>", "fi", ";"}},
-	{"<if>", {"if", "(", "<Test>", ")", "<Program>", "fi", ";"}},
-	{"<input>", {"input", ";"}},
-	{"<print>", {"print", "<E>", ";"}},
-	{"<label>", {"L"}},
-	{"<transition>", {"goto", "L", ";"}},
-	{"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}},
-	{"<case>", {"case", "C", ":", "<Program>", "<case>"}},
-	{"<case>", {"case", "C", ":", "<Program>"}},
-	{"<case>", {"otherwise", ":", "<Program>"}},
-	{"<exception>", {"raise", ";"}},
-	{"<comment>", {"rem"}},
-	{"<E>", {"<E>", "+", "<T>"}},
-	{"<E>", {"<E>", "-", "<T>"}},
-	{"<E>", {"<T>"}},
-	{"<E>", {"(", "<E>", ")"}},
-	{"<T>", {"<T>", "*", "<F>"}},
-	{"<T>", {"<T>", "/", "<F>"}},
-	{"<T>", {"<T>", "%", "<F>"}},
-	{"<T>", {"<F>"}},
-	{"<F>", {"V"}},
-	{"<F>", {"C"}},
-	{"<F>", {"get", "(", "<E>", ",", "<E>", ")"}},
-	{"<Test>", {"<E>", "rel", "<E>"}},
-	{"<TYPE>", {"int"}},
-	{"<TYPE>", {"bignumber"}}
+	/*00*/{"<S>", {"<Ads>", "<Program>"}},
+	/*01*/{"<Ads>", {"declare", "<ads>", ";", "<Ads>"}},
+	/*02*/{"<Ads>", {"eps"}},
+	/*03*/{"<ads>", {"V", "as", "<TYPE>", ",", "<ads>"}},
+	/*04*/{"<ads>", {"V", "as", "<TYPE>"}},
+	/*05*/{"<Program>", {"<Operation>", "<Program>"}},
+	/*06*/{"<Program>", {"eps"}},
+	/*07*/{"<Operation>", {";"}},
+	/*08*/{"<Operation>", {"<Assignment>"}},
+	/*09*/{"<Operation>", {"<while>"}},
+	/*10*/{"<Operation>", {"<for>"}},
+	/*11*/{"<Operation>", {"<if>"}},
+	/*12*/{"<Operation>", {"<input>"}},
+	/*13*/{"<Operation>", {"<print>"}},
+	/*14*/{"<Operation>", {"<label>"}},
+	/*15*/{"<Operation>", {"<transition>"}},
+	/*16*/{"<Operation>", {"<select>"}},
+	/*17*/{"<Operation>", {"<exception>"}},
+	/*18*/{"<Operation>", {"<comment>"}},
+	/*19*/{"<Assignment>", {"V", "=", "<E>", ";"}},
+	/*20*/{"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}},
+	/*21*/{"<for>", {"for", "V", "from", "<E>", "to", "<E>", "<byE>", "do", "<Program>", "od", ";"}},
+	/*22*/{"<byE>", {"by", "<E>"}},
+	/*23*/{"<byE>", {"eps"}},
+	/*24*/{"<if>", {"if", "(", "<Test>", ")", "<Program>", "else", "<Program>", "fi", ";"}},
+	/*25*/{"<if>", {"if", "(", "<Test>", ")", "<Program>", "fi", ";"}},
+	/*0*/{"<input>", {"input", "V", ";"}},
+	/*0*/{"<print>", {"print", "<E>", ";"}},
+	/*0*/{"<label>", {"L"}},
+	/*0*/{"<transition>", {"gotoL", ";"}},
+	/*30*/{"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}},
+	/*0*/{"<case>", {"case", "C", ":", "<Program>", "<case>"}},
+	/*0*/{"<case>", {"case", "C", ":", "<Program>"}},
+	/*0*/{"<case>", {"otherwise", ":", "<Program>"}},
+	/*0*/{"<exception>", {"raise", ";"}},
+	/*35*/{"<comment>", {"rem"}},
+	/*0*/{"<E>", {"<E>", "+", "<T>"}},
+	/*0*/{"<E>", {"<E>", "-", "<T>"}},
+	/*0*/{"<E>", {"<T>"}},
+	/*0*/{"<E>", {"(", "<E>", ")"}},
+	/*40*/{"<T>", {"<T>", "*", "<F>"}},
+	/*0*/{"<T>", {"<T>", "/", "<F>"}},
+	/*0*/{"<T>", {"<T>", "%", "<F>"}},
+	/*0*/{"<T>", {"<F>"}},
+	/*0*/{"<F>", {"V"}},
+	/*45*/{"<F>", {"C"}},
+	/*0*/{"<F>", {"get", "(", "<E>", ",", "<E>", ")"}},
+	/*0*/{"<Test>", {"<E>", "rel", "<E>"}},
+	/*0*/{"<TYPE>", {"int"}},
+	/*49*/{"<TYPE>", {"bignumber"}}
 
 	};
 
 	// Список нетерминалов грамматики
 	vector<string> nonterminals = { "<S>", "<Ads>", "<ads>", "<Program>", "<Operation>", "<Assignment>", "<while>", "<for>", "<byE>", "<if>", "<input>", "<print>", "<label>", "<transition>", "<select>", "<case>", "<exception>", "<comment>", "<E>", "<T>", "<F>", "<Test>", "<TYPE>" };
 
-	// Список терминалов грамматики
-	vector<string> terminals = { "declare", ";", "V", "as", ",", "=", "while", "rel", "do", "od", "for", "from", "to", "by", "eps", "if", "(", ")", "else", "fi", "input", "print", "L", "goto", "select", "in", "ni", "case", "C", ":", "otherwise", "raise", "rem", "+", "-", "*", "/", "%", "get", "int", "bignumber" };
+	// Список терминалов грамматики eps = 14
+	vector<string> terminals = { "declare", ";", "V", "as", ",", "=", "while", "rel", "do", "od", "for", "from", "to", "by", "eps", "if", "(", ")", "else", "fi", "input", "print", "L", "gotoL", "select", "in", "ni", "case", "C", ":", "otherwise", "raise", "rem", "+", "-", "*", "/", "%", "get", "int", "bignumber" };
 
 	// Список ключевых слов грамматики
 	const vector<string> Keywords
@@ -109,7 +109,7 @@ protected:
 		int number_table; // Номер таблицы откуда этот символ
 		string symbol;    // Символ для переноса
 
-		bool operator==(const for_goto& other) const	
+		bool operator==(const for_goto& other) const
 		{
 			return number_table == other.number_table && symbol == other.symbol;
 		}
@@ -150,8 +150,8 @@ protected:
 			number_row = number;
 
 			//Создание пустышек
-			f.assign(t, "-"); 
-			g.assign(t + nont - 1, -1); 
+			f.assign(t, "-");
+			g.assign(t + nont - 1, -1);
 		}
 	};
 
@@ -178,6 +178,73 @@ protected:
 	};
 
 	tabular_analyzer TabAn;
+
+	struct attribute_word
+	{
+		string word;
+		vector<string> program;
+		vector<int> labels;
+		vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
+		int end_label;
+		int type; // int = 0, bignumber = 1
+		string relation;
+		vector<string>::iterator adress_label;
+		set<variant<int, BigNumber>>::iterator adress_const;
+		set<variant<int, BigNumber>>::iterator adress_const2;
+		map<string, variant<int, BigNumber>>::iterator adress_var;
+		bool flag_otherwise = 0;
+
+		attribute_word()
+		{
+			;
+		}
+
+		attribute_word(string word_)
+		{
+			word = word_;
+		}
+
+		bool operator==(const attribute_word& other) const
+		{
+			return word == other.word &&
+				program == other.program &&
+				labels == other.labels &&
+				list_adress_constants == other.list_adress_constants &&
+				end_label == other.end_label &&
+				type == other.type &&
+				relation == other.relation &&
+				adress_const == other.adress_const &&
+				adress_var == other.adress_var;
+		}
+	};
+
+	struct LabelInfo
+	{
+		string label_name;
+		int number_line;
+
+		LabelInfo(string name)
+		{
+			label_name = name;
+			number_line = -1;
+		}
+
+		LabelInfo(string name, int line)
+		{
+			label_name = name;
+			number_line = line;
+		}
+
+		bool operator==(const LabelInfo& other) const
+		{
+			return label_name == other.label_name && number_line == other.number_line;
+		}
+
+	};
+
+	vector<LabelInfo> number_lines_labels;
+	vector<map<string, variant<int, BigNumber>>::iterator> declared_variables;
+
 
 
 public:
@@ -218,10 +285,16 @@ public:
 
 	void Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& file);
 
-	void Print_Stack(stack<string> st);
+	void Print_Stack(stack<attribute_word> st);
 
-	//Провераяем входящее на правильность грамматики по восходящему табличному анализатору
-	bool Processing_incoming_code(const string file_name);
+	//Переводим грамматику в стековый язык
+	bool Translation_of_code(const string file_name, const string output_file_name);
+
+	void Print_Stack_Program(const vector<string>& input);
+	void Write_Stack_Program(const vector<string>& input, ofstream& file);
+
+	void Print_Attribute_Stack(stack<attribute_word> input);
+	void Write_Attribute_Stack(stack<attribute_word> input, ofstream& file);
 
 protected:
 
@@ -262,12 +335,12 @@ protected:
 	//Восходящий табличный анализатор
 	Sintax::tabular_analyzer Tabular_analyzer(Sintax::tabular_analyzer& TabAn);
 
-	//Распознаем подаваемое слово как вид терминала
-	string Word_processing(string word);
+	//Распознаем подаваемый токен как аттрибутное слово
+	Sintax::attribute_word Token_processing(Token token_);
 
 	// Выдает номер термилала из таблицы терминалов
 	int Terminal_number(string terminal);
-	
+
 	// Выдает номер нетермилала из таблицы нетерминалов
 	int Nonterminal_number(string nonterminal);
 
@@ -277,7 +350,12 @@ protected:
 	bool IsCellFull(int pos1, int pos2, string content);
 
 	int FindRuleInRow(Sintax::canonical_table rule);
-	
 
+	bool S_more_I(string a);
 
+	attribute_word Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule, int number_line);
+
+	stack<attribute_word> del_rule(stack<attribute_word>& attribute_stack, int number_rule);
+
+	stack<attribute_word> del_n_elements(stack<attribute_word>& attribute_stack, int n);
 };

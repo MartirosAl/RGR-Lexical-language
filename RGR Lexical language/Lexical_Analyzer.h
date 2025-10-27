@@ -37,8 +37,8 @@ protected:
           "VARIABLE",
           "CONSTANT",
           "GET",
-          "MARK",
-          "GO_TO_MARK",
+          "LABEL",
+          "GO_TO_LABEL",
           "VARIABLE_TYPE",
           "ARITHMETIC_OPERATION",
           "RELATION",
@@ -83,8 +83,8 @@ protected:
         VARIABLE,
         CONSTANT,
         GET,
-        MARK,
-        GO_TO_MARK,
+        LABEL,
+        GO_TO_LABEL,
         VARIABLE_TYPE,
         ARITHMETIC_OPERATION,
         RELATION,
@@ -141,8 +141,9 @@ protected:
         //get<0> is an int value for relations and arif. operations
         //get<1> is the cell for the table of constants.
         //get<2> is the cell for the variable table.
-        //get<3> is the cell for the mark table.
+        //get<3> is the cell for the label table.
         variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> value = " ";
+        // Итератор на второй аргумент функции get (для токенов типа GET, где требуется два аргумента-константы)
         set<variant<int, BigNumber>>::iterator second_argument_get;
         int number_line = 0;
     };
@@ -153,7 +154,7 @@ protected:
     };
 
 public:
-    vector<Token> Lexical_Analyzer(string filename);
+    vector<Token> Lexical_Analyzer(const string filename);
 
     void Print_Table_Token();
 
@@ -173,8 +174,8 @@ protected:
     map<string, variant<int, BigNumber>> table_variable;
 
     //Таблица меток
-    //Table of lables(marks)
-    vector<string> table_marks;
+    //Table of lables(labels)
+    vector<string> table_labels;
 
     //Таблица лексем для вывода
     //Вектор вариантов (int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator)
@@ -195,7 +196,7 @@ protected:
        {"if", TokenType::IF},                                                 {"else", TokenType::ELSE}, {"fi", TokenType::FI},
        {"input", TokenType::INPUT},
        {"print", TokenType::PRINT},
-       {"goto", TokenType::GO_TO_MARK},
+       {"goto", TokenType::GO_TO_LABEL},
        {"select", TokenType::SELECT},    {"in", TokenType::IN}, {"case", TokenType::CASE}, {"otherwise", TokenType::OTHERWISE}, {"ni", TokenType::NI},
        {"raise", TokenType::RAISE},
        {"get", TokenType::GET}
@@ -221,8 +222,8 @@ protected:
     void Add_Constant(vector<short> a);
 
     //Процедура ДОБАВИТЬ_МЕТКУ
-    //Procedure ADD_THE_MARK
-    void Add_Mark(string a);
+    //Procedure ADD_THE_LABEL
+    void Add_Label(string a);
 
     //Процедура ДОБАВИТЬ_ПЕРЕМЕННУЮ
     //Procedure ADD_THE_VARIABLE
@@ -256,7 +257,7 @@ protected:
     //The pointer register contains a pointer to the table of names
     //get<0> - iterator(pointer) to the table of constants
     //get<1> - iterator(pointer) to the table of variables
-    //get<2> - iterator(pointer) to the table of marks
+    //get<2> - iterator(pointer) to the table of labels
     variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> register_indicator;
 
     //Номер строки хранит номер текущей строки в программе
@@ -289,9 +290,9 @@ protected:
 
     bool Is_this_empty_operators(string a);
 
-    bool Is_this_o_mark(string a);
+    bool Is_this_o_label(string a);
 
-    bool Is_this_c_mark(string a);
+    bool Is_this_c_label(string a);
 
     SymbolicToken Transliterator(int character);
 

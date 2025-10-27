@@ -1,0 +1,11 @@
+
+
+push a
+push b
+>
+ji 7
+jmp 10
+
+
+jmp 2
+

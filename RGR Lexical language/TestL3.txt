@@ -1,4 +1,6 @@
 declare a as int ;
 ;
 a = 5 ;
-while a rel b do ; od ;
+while a > b do ; od ;
+goto U ;
+<<U>>

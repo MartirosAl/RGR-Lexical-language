@@ -1,4 +1,5 @@
 #include "Lexical_Analyzer.h"
+#include "Sintax_Analyzer.h"
 
 void TableToken::Add_Constant(string a)
 {
@@ -33,13 +34,13 @@ void TableToken::Add_Constant(vector<short> a)
     register_indicator = table_constants.find(temp);
 }
 
-void TableToken::Add_Mark(string a)
+void TableToken::Add_Label(string a)
 {
-    if (!count(table_marks.begin(), table_marks.end(), a))
+    if (!count(table_labels.begin(), table_labels.end(), a))
     {
-        table_marks.push_back(a);
+        table_labels.push_back(a);
     }
-    register_indicator = find(table_marks.begin(), table_marks.end(), a);
+    register_indicator = find(table_labels.begin(), table_labels.end(), a);
 }
 
 void TableToken::Add_Variable(string word)
@@ -198,7 +199,7 @@ bool TableToken::Is_this_empty_operators(string a)
         return true;
     return false;
 }
-bool TableToken::Is_this_o_mark(string a)
+bool TableToken::Is_this_o_label(string a)
 {
     if (a.size() < 2)
         return false;
@@ -207,7 +208,7 @@ bool TableToken::Is_this_o_mark(string a)
     return false;
 }
 
-bool TableToken::Is_this_c_mark(string a)
+bool TableToken::Is_this_c_label(string a)
 {
     if (a[a.size() - 1] == a[a.size() - 2] && a[a.size() - 1] == '>')
         return true;
@@ -286,7 +287,7 @@ TableToken::SymbolicToken TableToken::Transliterator(int character)
     return result;
 }
 
-vector<TableToken::Token> TableToken::Lexical_Analyzer(string filename)
+vector<TableToken::Token> TableToken::Lexical_Analyzer(const string filename)
 {
     ifstream in(filename);
     if (!in)
@@ -304,7 +305,7 @@ vector<TableToken::Token> TableToken::Lexical_Analyzer(string filename)
     prev_character = Transliterator(in.peek()).token_class;
     string accumulation_of_value;
     bool flag_comment = false;
-    bool flag_mark = false;
+    bool flag_label = false;
     bool flag_get = false;
 
     while (flag)
@@ -336,26 +337,26 @@ vector<TableToken::Token> TableToken::Lexical_Analyzer(string filename)
             continue;
         }
 
-        if (flag_mark)
+        if (flag_label)
         {
             if (symbolic_token.token_class != LETTER && symbolic_token.token_class != DIGIT && symbolic_token.value != '>')
             {
-                Error_Handler("Wrong symbol in mark");
+                Error_Handler("Wrong symbol in label");
                 table_tokens[table_tokens.size() - 1].token_class = register_type_token;
             }
             if (symbolic_token.token_class == END || symbolic_token.token_class == LF)
             {
-                Error_Handler("The mark is not closed");
+                Error_Handler("The label is not closed");
                 break;
             }
             accumulation_of_value += symbolic_token.value;
-            if (Is_this_c_mark(accumulation_of_value))
+            if (Is_this_c_label(accumulation_of_value))
             {
-                flag_mark = false;
+                flag_label = false;
 
                 accumulation_of_value.resize(accumulation_of_value.size() - 2);
 
-                Add_Mark(accumulation_of_value);
+                Add_Label(accumulation_of_value);
                 accumulation_of_value.clear();
 
                 table_tokens[table_tokens.size() - 1].value = get<2>(register_indicator);
@@ -434,9 +435,9 @@ vector<TableToken::Token> TableToken::Lexical_Analyzer(string filename)
         }
         else if (prev_character == SymbolicTokenType::SPACE || prev_character == SymbolicTokenType::LF)
             accumulation_of_value = symbolic_token.value;
-        else if (prev_token == GO_TO_MARK)
+        else if (prev_token == GO_TO_LABEL)
         {
-            Add_Mark(accumulation_of_value);
+            Add_Label(accumulation_of_value);
             table_tokens[table_tokens.size() - 1].value = get<2>(register_indicator);
             accumulation_of_value = symbolic_token.value;
             register_type_token = start;
@@ -472,10 +473,10 @@ vector<TableToken::Token> TableToken::Lexical_Analyzer(string filename)
                     register_type_token = TokenType::O_COMMENT;
                     flag_comment = true;
                 }
-                else if (Is_this_o_mark(accumulation_of_value))
+                else if (Is_this_o_label(accumulation_of_value))
                 {
-                    register_type_token = TokenType::MARK;
-                    flag_mark = true;
+                    register_type_token = TokenType::LABEL;
+                    flag_label = true;
                 }
                 else if (table_operations.count(accumulation_of_value))
                 {

@@ -79,6 +79,9 @@
     <Text Include="TestL3.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="OUT.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Test4.txt">

@@ -362,12 +362,12 @@ void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& f
 	}
 }
 
-void Sintax::Print_Stack(stack<string> st)
+void Sintax::Print_Stack(stack<attribute_word> st)
 {
-	stack<string> temp_st = st;
+	stack<attribute_word> temp_st = st;
 	while (!temp_st.empty())
 	{
-		cout << temp_st.top() << " ";
+		cout << temp_st.top().word << " ";
 		temp_st.pop();
 	}
 }
@@ -824,112 +824,315 @@ Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabA
 	return TabAn;
 }
 
-string Sintax::Word_processing(string word)
+Sintax::attribute_word Sintax::Token_processing(Token token_)
 {
-	string result;
+	attribute_word result;
 
-	if (word.empty())
-		throw (string("Empty word"));
+	switch (token_.token_class)
+	{
+	case VARIABLE:
+		result.word = "V";
+		result.adress_var = get<2>(token_.value);
+		break;
 
-	if (IsTerminal(word))
-	{
-		result = word;
-	}
-	else if (!isdigit(word[0]))
-	{
-		result = "V";
-	}
-	else
-	{
-		result = "C";
-	}
+	case CONSTANT:
+		result.word = "C";
+		result.adress_const = get<1>(token_.value);
+		result.type = (*(get<1>(token_.value))).index();
+		break;
 
+	case GET:
+		result.word = "get";
+		result.adress_const = get<1>(token_.value);
+		result.adress_const2 = token_.second_argument_get;
+		break;
+
+	case LABEL:
+		result.word = "L";
+		result.adress_label = get<3>(token_.value);
+		break;
+
+	case GO_TO_LABEL:
+		result.word = "gotoL";
+		result.adress_label = get<3>(token_.value);
+		break;
+
+	case VARIABLE_TYPE:
+		result.word = get<0>(token_.value);
+		break;
+
+	case ARITHMETIC_OPERATION:
+		result.word = get<0>(token_.value);
+		break;
+
+	case RELATION:
+		result.word = "rel";
+		result.relation = get<0>(token_.value);
+		break;
+
+	case EMPTY_OPERATOR:
+		result.word = ";";
+		break;
+
+	case DECLARING_VARIABLES:
+		result.word = "declare";
+		break;
+
+	case AS:
+		result.word = "as";
+		break;
+
+	case ASSIGNMENT_OPERATOR:
+		result.word = "=";
+		break;
+
+	case WHILE:
+		result.word = "while";
+		break;
+
+	case DO:
+		result.word = "do";
+		break;
+
+	case OD:
+		result.word = "od";
+		break;
+
+	case FOR:
+		result.word = "for";
+		break;
+
+	case FROM:
+		result.word = "from";
+		break;
+
+	case TO:
+		result.word = "to";
+		break;
+
+	case BY:
+		result.word = "by";
+		break;
+
+	case IF:
+		result.word = "if";
+		break;
+
+	case ELSE:
+		result.word = "else";
+		break;
+
+	case FI:
+		result.word = "fi";
+		break;
+
+	case SELECT:
+		result.word = "select";
+		break;
+
+	case IN:
+		result.word = "in";
+		break;
+
+	case CASE:
+		result.word = "case";
+		break;
+
+	case OTHERWISE:
+		result.word = "otherwise";
+		break;
+
+	case NI:
+		result.word = "ni";
+		break;
+
+	case INPUT:
+		result.word = "input";
+		break;
+
+	case PRINT:
+		result.word = "print";
+		break;
+
+	case RAISE:
+		result.word = "raise";
+		break;
+
+	case COMMENT:
+		result.word = "rem";
+		break;
+
+	case O_BRACE:
+		result.word = "(";
+		break;
+
+	case C_BRACE:
+		result.word = ")";
+		break;
+
+	case COMMA:
+		result.word = ",";
+		break;
+
+	case CASE_LISTING:
+		result.word = ":";
+		break;
+	default:
+		throw (string("Error in Token processing"));
+		
+	}
 	return result;
 }
 
-bool Sintax::Processing_incoming_code(const string file_name)
-{
-	string word;
-	fstream file(file_name);
-	if (!file.is_open())
-	{
-		cerr << "Error opening file: " << file_name << endl;
-		return false;
-	}
-	int T = 0;
-	if (file.eof())
-		return true;
-	file >> word;
-	stack<string> action_stack;
-	action_stack.push("0");
-	vector<int> rules_used;
 
-	///TEST///
-	try 
+
+bool Sintax::Translation_of_code(const string file_name, const string output_file_name)
+{
+	Lexical_Analyzer(file_name);
+
+	if (table_tokens.size() == 0)
+		return true;
+
+	ofstream file(output_file_name);
+	if (!file)
+		return -1;
+
+	attribute_word att_word;
+	vector<int> rules_used;
+	stack<attribute_word> action_stack;
+	int term_num;
+	string action_cell;
+
+	// Инициализация переменных
+	int T = 0;
+	action_stack.push(attribute_word("0"));
+	att_word = Token_processing(table_tokens[0]);
+	int token_index = 0;
+	int size_program = 0;
+
+	int TEST_COUNTER = 0;
+
+	try
 	{
 		while (action_stack.size() >= 1)
 		{
-			
-			word = Word_processing(word);
-			///TEST///
-			cout << "." << word << " " << T << " || ";
-			Print_Stack(action_stack);
-			cout << endl;
-			///TEST///
+			if (token_index < table_tokens.size())
+			{
+				term_num = Terminal_number(Token_processing(table_tokens[token_index]).word);
+				action_cell = TabAn.rows[T].f[term_num];
+			}
+			else
+			{
+				action_cell = TabAn.rows[T].f[Terminal_number("eps")];
+			}
 
-			int term_num = Terminal_number(word);
-			string action_cell = TabAn.rows[T].f[term_num];
+			//TEST//
+			if (token_index < table_tokens.size())
+				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			else
+				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			Print_Attribute_Stack(action_stack);
+			cout << endl;
+			TEST_COUNTER++;
+			//TEST//
 
 			if (action_cell == "t")
 			{
-				action_stack.push(word);
+				
+				token_index++;
+				action_stack.push(att_word);
 				T = TabAn.rows[T].g[nonterminals.size() + term_num - ((term_num < Terminal_number("eps")) ? 0 : 1)]; // В g нет eps
-				action_stack.push(to_string(T));
-				if (file.eof())
-					word = "eps";
-				else
-					file >> word;
 			}
 			else if (action_cell == "a")
-				return true;
+			{
+				att_word = Grouping_by_rule(action_stack, 0, size_program);
+				break;
+			}
 			else if (isdigit(action_cell[0]) && stoi(action_cell) >= 0 && stoi(action_cell) < TabAn.rows.size())
 			{
 				int rule_idx = stoi(action_cell);
-				//Удаляем из стека 2 * |правило|
-				if (vec_rules[rule_idx].second[0] != "eps")
-				{
-					for (int i = 0; i < 2 * vec_rules[rule_idx].second.size(); i++)
-					{
-						if (action_stack.empty())
-							throw(string("Stack underflow during reduction"));
-						action_stack.pop();
-					}
-				}
+				rules_used.push_back(rule_idx);
 
-				int temp_T = stoi(action_stack.top());
-				action_stack.push(vec_rules[rule_idx].first);
+				att_word = Grouping_by_rule(action_stack, rule_idx, size_program);
+				size_program = att_word.program.size();
+
+				int temp_T = stoi(action_stack.top().word);
+				action_stack.push(att_word);
 				T = TabAn.rows[temp_T].g[Nonterminal_number(vec_rules[rule_idx].first)];
-				action_stack.push(to_string(T));
 			}
 			else
 				throw(string("Wrong command"));
 
-			///TEST///
-			cout << ".." << word << " " << T << " || ";
-			Print_Stack(action_stack);
-			cout << endl;
-			///TEST///
-
-		}		
-
+			action_stack.push(to_string(T));
+			if (token_index < table_tokens.size())
+			{
+				att_word = Token_processing(table_tokens[token_index]);
+			}
+			else
+			{
+				att_word.word = "eps";
+			}
+		}
 	}
 	catch (string err)
 	{
-		cerr << "Word " << word << " can't be recognized" << endl;
-		cerr << err << endl;
+		cerr << "Error during syntactic analysis: " << err << endl;
 		return false;
 	}
-	return false;
+
+	Write_Stack_Program(att_word.program, file);
+	Print_Stack_Program(att_word.program);
+
+	return true;
+
+}
+
+void Sintax::Print_Stack_Program(const vector<string>& input)
+{
+	for (auto& i : input)
+	{
+		cout << i << endl;
+	}
+}
+
+void Sintax::Write_Stack_Program(const vector<string>& input, ofstream& file)
+{
+	for (auto& i : input)
+	{
+		file << i << endl;
+	}
+}
+
+void Sintax::Print_Attribute_Stack(stack<attribute_word> input)
+{
+	stack<attribute_word> temp;
+	while (!input.empty())
+	{
+		temp.push(input.top());
+		input.pop();
+	}
+	while (!temp.empty())
+	{
+		cout << temp.top().word << " ";
+		temp.pop();
+	}
+	cout << endl;
+}
+
+void Sintax::Write_Attribute_Stack(stack<attribute_word> input, ofstream& file)
+{
+	stack<attribute_word> temp;
+	while (!input.empty())
+	{
+		temp.push(input.top());
+		input.pop();
+	}
+	while (!temp.empty())
+	{
+		file << temp.top().word << " ";
+		temp.pop();
+	}
+	file << endl;
 }
 
 int Sintax::Terminal_number(string terminal)
@@ -1086,3 +1289,818 @@ void Sintax::Write_GO_TO_args(list<for_goto> go_to_args, ofstream& file)
 		file << "(" << i.number_table << " " << i.symbol << ")" << endl;
 	}
 }
+
+Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule, int number_line)
+{
+	attribute_word result(vec_rules[number_rule].first);
+
+	vector<string> p1, p2, p3, p4, p5;
+	int type1, type2, type3, type4, type5;
+	map<string, variant<int, BigNumber>>::iterator adress_var1, adress_var2, adress_var3, adress_var4, adress_var5;
+	variant<int, BigNumber> adress_const1, adress_const2, adress_const3, adress_const4, adress_const5;
+	set<variant<int, BigNumber>>::iterator adress_int_const1, adress_int_const2, adress_int_const3, adress_int_const4, adress_int_const5;
+	string relation;
+	int new_label1, new_label2, new_label3, new_label4;
+	string name_label;
+	int end_label;
+	bool flag_otherwise;
+	vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
+	vector<int> labels;
+	int temp_counter = 0;
+
+
+	switch (number_rule)
+	{
+	case 0: // {"<S>", {"<Ads>", "<Program>"}}
+		attribute_stack.pop(); // убираем T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // <Ads>
+
+		result.program = p1;
+
+		break;
+
+	case 1: // {"<Ads>", {"declare", "<ads>", ";", "<Ads>"}}
+		del_rule(attribute_stack, number_rule);
+		break;
+
+	case 2: // {"<Ads>", {"eps"}}
+		del_rule(attribute_stack, number_rule);
+		break;
+
+	case 3: // {"<ads>", {"V", "as", "<TYPE>", ",", "<ads>"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // <ads>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ,
+		attribute_stack.pop(); // T
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <TYPE>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // as
+		attribute_stack.pop(); // T
+		adress_var2 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var2) != declared_variables.end())
+			throw (string("An attempt to repeat the announcement"));
+
+		declared_variables.push_back(adress_var2);
+		if (type1 == 0)
+			(*adress_var2).second = int(0);
+		else
+			(*adress_var2).second = BigNumber(0);
+		break;
+
+	case 4: // {"<ads>", {"V", "as", "<TYPE>"}}
+		attribute_stack.pop(); // T
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <TYPE>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // as
+		attribute_stack.pop(); // T
+		adress_var2 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var2) != declared_variables.end())
+			throw (string("An attempt to repeat the announcement"));
+
+		declared_variables.push_back(adress_var2);
+		if (type1 == 0)
+			(*adress_var2).second = int(0);
+		else
+			(*adress_var2).second = BigNumber(0);
+		
+		break;
+
+	case 5: // {"<Program>", {"<Operation>", "<Program>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Operation>
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+
+		break;
+
+	case 6: // {"<Program>", {"eps"}}
+		del_rule(attribute_stack, number_rule);
+
+		result.program.push_back("");
+
+		break;
+
+	case 7: case 8: // {"<Operation>", {"<Assignment>"}} /  {"<Operation>", {";"}} 
+
+		del_rule(attribute_stack, number_rule);
+		result.program.push_back("");
+		break;
+
+	case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18:// {"<Operation>", ...}
+		
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); //<while> / <for> / <if> / <input> / <print> / <label> / <transition> / <select> / <exception> / <comment> 
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		break;
+
+	case 19: // {"<Assignment>", {"V", "=", "<E>", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // =
+		attribute_stack.pop(); // T
+		adress_var1 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) == declared_variables.end())
+			throw (string("The variable declaration is missing"));
+		if ((*adress_var1).second.index() != type1)
+			throw(string("Type mismatch in assignment"));
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("pop " + (*adress_var1).first);
+		break;
+
+	case 20: // {"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // od
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // do
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		relation = attribute_stack.top().relation;
+		attribute_stack.pop(); // rel
+		attribute_stack.pop(); // T
+		p3 = attribute_stack.top().program;
+		type3 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // while
+
+		if (type2 != type3)
+			throw(string("Type mismatch in while"));
+
+		new_label1 = number_line;
+		result.program.insert(result.program.end(), p3.begin(), p3.end());
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.push_back(relation);
+		new_label2 = number_line + result.program.size() + 2; // +2 тк после будет ji и jmp до самой метки
+		result.program.push_back("ji " + to_string(new_label2));
+		new_label3 = number_line + result.program.size() + 1 + p1.size() + 1; // до метки еще <Program> и jmp 
+		result.program.push_back("jmp " + to_string(new_label3));
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("jmp " + to_string(new_label1));
+		break;
+
+	case 21: // { "<for>", { "for", "V", "from", "<E>", "to", "<E>", "<byE>", "do", "<Program>", "od", ";" } }
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // od
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // do
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <byE>
+		attribute_stack.pop(); // T
+		p3 = attribute_stack.top().program;
+		type3 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // to
+		attribute_stack.pop(); // T
+		p4 = attribute_stack.top().program;
+		type4 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // from
+		attribute_stack.pop(); // T
+		adress_var5 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // for
+
+
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var5) == declared_variables.end())
+			throw (string("The variable declaration is missing"));
+
+		if (type2 != type3 || type2 != type4 || type2 != (*adress_var5).second.index())
+			throw(string("Type mismatch in for"));
+
+		if ((*adress_var5).second.index() == 0)
+		{
+			result.program.insert(result.program.end(), p4.begin(), p4.end());
+			result.program.push_back("pop " + (*adress_var5).first);
+			new_label1 = number_line + result.program.size();
+			result.program.push_back("push " + (*adress_var5).first);
+			result.program.insert(result.program.end(), p3.begin(), p3.end());
+			result.program.push_back(">");
+			new_label2 = number_line + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
+			result.program.push_back("ji " + to_string(new_label2));
+			new_label3 = number_line + result.program.size() + 2 + p2.size() + 3;
+			result.program.push_back("jmp " + to_string(new_label3));
+			new_label4 = number_line + result.program.size();
+			result.program.push_back("push " + (*adress_var5).first);
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.push_back("+");
+			result.program.push_back("pop " + (*adress_var5).first);
+			result.program.push_back("jmp " + to_string(new_label1));
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("jmp " + to_string(new_label4));
+		}
+		else
+		{
+			result.program.insert(result.program.end(), p4.begin(), p4.end());
+			result.program.push_back("pop " + (*adress_var5).first);
+			new_label1 = number_line + result.program.size();
+			result.program.push_back("pushbn " + (*adress_var5).first);
+			result.program.insert(result.program.end(), p3.begin(), p3.end());
+			result.program.push_back(">");
+			new_label2 = number_line + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
+			result.program.push_back("ji " + to_string(new_label2));
+			new_label3 = number_line + result.program.size() + 2 + p2.size() + 3;
+			result.program.push_back("jmp " + to_string(new_label3));
+			new_label4 = number_line + result.program.size();
+			result.program.push_back("pushbn " + (*adress_var5).first);
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.push_back("+");
+			result.program.push_back("pop " + (*adress_var5).first);
+			result.program.push_back("jmp " + to_string(new_label1));
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("jmp " + to_string(new_label4));
+		}
+
+		break;
+
+	case 22: // {"<byE>", {"by", "<E>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // by
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.type = type1;
+		break;
+
+	case 23: // {"<byE>", {"eps"}}
+		del_rule(attribute_stack, number_rule);
+
+		result.program.push_back("push 1"); // Так как шаг не определен, то по умолчанию он равен 1
+		result.type = 0;
+		break;
+
+	case 24: // {"<if>", {"if", "(", "<Test>", ")", "<Program>", "else", "<Program>", "fi", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // fi
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // else
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // )
+		attribute_stack.pop(); // T
+		p3 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Test>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // (
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // if
+
+		result.program.insert(result.program.end(), p3.begin(), p3.end());
+		new_label1 = number_line + result.program.size() + 1 + p2.size() + 1;
+		result.program.push_back("ji " + to_string(new_label1));
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		new_label2 = number_line + result.program.size() + 1 + p1.size();
+		result.program.push_back("jmp " + to_string(new_label2));
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		
+		break;
+
+	case 25: // {"<if>", {"if", "(", "<Test>", ")", "<Program>", "fi", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // fi
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // )
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Test>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // (
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // if
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		new_label1 = number_line + result.program.size() + 2;
+		result.program.push_back("ji " + to_string(new_label1));
+		new_label2 = number_line + result.program.size() + 1 + p1.size();
+		result.program.push_back("jmp " + to_string(new_label2));
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+
+		break;
+
+	case 26: // {"<input>", {"input", "V", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		adress_var1 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // input
+
+
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) != declared_variables.end())
+			throw (string("The variable declaration is missing"));
+
+		result.program.push_back("read");
+		result.program.push_back("pop " + (*adress_var1).first);
+
+		break;
+
+	case 27: // {"<print>", {"print", "<E>", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // print
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("write");
+		break;
+
+	case 28: // {"<label>", {"L"}}
+		attribute_stack.pop(); // T
+		name_label = *(attribute_stack.top().adress_label);
+		attribute_stack.pop(); // gotoL
+
+		if (find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label)) != number_lines_labels.end())
+		{
+			// Если сначала была goto, а только сейчас встретиласть label
+			find( number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label) )->number_line = result.program.size();
+		}
+		else
+		{
+			number_lines_labels.push_back(LabelInfo(name_label, result.program.size()));
+		}
+		break;
+
+	case 29: //{ "<transition>", { "gotoL", ";" } }
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		name_label = *(attribute_stack.top().adress_label);
+		attribute_stack.pop(); // gotoL
+
+		if (find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label)) != number_lines_labels.end())
+		{
+			// Если сначала была метка
+			result.program.push_back("jmp " + to_string(find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label))->number_line));
+		}
+		else
+		{
+			number_lines_labels.push_back(LabelInfo(name_label));
+		}
+
+		break;
+
+	case 30: // {"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ;
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ni
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		flag_otherwise = attribute_stack.top().flag_otherwise;
+		list_adress_constants = attribute_stack.top().list_adress_constants;
+		labels = attribute_stack.top().labels;
+		end_label = attribute_stack.top().end_label;
+		attribute_stack.pop(); // <case>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // in
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // select
+
+		if (type2 == 1)
+			throw(string("Type mismatch in case"));
+		for (auto& i : list_adress_constants)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.push_back("push " + get<0>((*i)));
+			result.program.push_back("=");
+			result.program.push_back("ji " + labels[temp_counter]);
+			temp_counter++;
+		}
+		if (flag_otherwise == 0)
+			result.program.push_back("jmp " + end_label);
+		else
+			result.program.push_back("jmp " + labels[labels.size() - 1]);
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+
+		break;
+
+	case 31: // {"<case>", {"case", "C", ":", "<Program>", "<case>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		flag_otherwise = attribute_stack.top().flag_otherwise;
+		list_adress_constants = attribute_stack.top().list_adress_constants;
+		labels = attribute_stack.top().labels;
+		end_label = attribute_stack.top().end_label;
+		attribute_stack.pop(); // <case>
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // :
+		attribute_stack.pop(); // T
+		adress_int_const3 = attribute_stack.top().adress_const;
+		type3 = attribute_stack.top().type;
+		attribute_stack.pop(); // C
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // case
+
+		if (type3 == 1)
+			throw(string("Type mismatch in case"));
+
+		//Проверка на наличее в списке одинаковых констант
+		//if (find(list_adress_constants.begin(), list_adress_constants.end(), adress_const3) != list_adress_constants.end())
+		//	throw("Uncertainty in the case");
+
+
+		result.labels = labels;
+		result.labels.push_back(result.program.size());
+		result.list_adress_constants.push_back(adress_int_const3);
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.push_back("jmp " + end_label);
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.end_label = end_label;
+
+		break;
+
+	case 32: // {"<case>", {"case", "C", ":", "<Program>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // :
+		attribute_stack.pop(); // T
+		adress_const2 = *attribute_stack.top().adress_const;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // C
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // case
+
+		if (type2 == 1)
+			throw(string("Type mismatch in case"));
+
+		result.labels.push_back(result.program.size());
+		result.list_adress_constants.push_back(adress_int_const2);
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.end_label = result.program.size();
+		break;
+
+	case 33: // {"<case>", {"otherwise", ":", "<Program>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <Program>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // :
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // otherwise
+
+		result.flag_otherwise = true;
+		result.labels.push_back(result.program.size());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.end_label = result.program.size();
+		break;
+
+	case 34: // {"<exception>", {"raise", ";"}}
+		del_rule(attribute_stack, number_rule);
+
+		result.program.push_back("end");
+		break;
+
+	case 35: // {"<comment>", {"rem"}}
+		del_rule(attribute_stack, number_rule);
+		result.program.push_back("");
+		break;
+
+	case 36: // {"<E>", {"<E>", "+", "<T>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <T>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // +
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("+");
+			result.type = type1;
+		}
+		else
+			throw(string("Type mismatch in addition"));
+		break;
+
+	case 37: // {"<E>", {"<E>", "-", "<T>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <T>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // -
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("-");
+			result.type = type1;
+		}
+		else
+			throw(string("Type mismatch in subtraction"));
+		break;
+
+	case 38: // {"<E>", {"<T>"}}
+		attribute_stack.pop(); // T
+		type1 = attribute_stack.top().type;
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <T>
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.type = type1;
+		break;
+
+	case 39: // {"<E>", {"(", "<E>", ")"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // )
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // (
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.type = type1;
+		break;
+
+	case 40: // {"<T>", {"<T>", "*", "<F>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <F>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // *
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <T>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("*");
+			result.type = type1;
+		}
+		else
+			throw(string("Type mismatch in multiplication"));
+		break;
+
+	case 41: // {"<T>", {"<T>", "/", "<F>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <F>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // /
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <T>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("/");
+			result.type = type1;
+		}
+		else
+			throw(string("Type mismatch in division"));
+		break;
+
+	case 42: // {"<T>", {"<T>", "%", "<F>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <F>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // %
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <T>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back("%");
+			result.type = type1;
+		}
+		else
+			throw(string("Type mismatch in modulus"));
+		break;
+
+	case 43: // {"<T>", {"<F>"}}
+		attribute_stack.pop(); // T
+		type1 = attribute_stack.top().type;
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <F>
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.type = type1;
+		break;
+
+	case 44: // {"<F>", {"V"}}
+		attribute_stack.pop(); // T
+		adress_var1 = attribute_stack.top().adress_var;
+		attribute_stack.pop(); // V
+
+		if ((*adress_var1).second.index() == 0)
+			result.program.push_back("push " + (*adress_var1).first);
+		else if ((*adress_var1).second.index() == 1)
+			result.program.push_back("pushbn " + (*adress_var1).first);
+		else 
+			throw (string("The variable declaration is missing"));
+		result.type = (*adress_var1).second.index();
+		break;
+
+	case 45: // {"<F>", {"C"}}
+		attribute_stack.pop(); // T
+		adress_const1 = *attribute_stack.top().adress_const;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // C
+		if (type1 == 0)
+			result.program.push_back("push " + to_string(get<0>(adress_const1)));
+		else if (type1 == 1)
+			result.program.push_back("pushbn " + to_string(get<1>(adress_const1)));
+		result.type = type1;
+		break;
+
+	case 46: // { "<F>", { "get", "(", "<E>", ",", "<E>", ")" } }
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // )
+		attribute_stack.pop(); // T
+		type2 = attribute_stack.top().type;
+		p2 = attribute_stack.top().program;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // ,
+		attribute_stack.pop(); // T
+		type1 = attribute_stack.top().type;
+		p1 = attribute_stack.top().program;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // (
+		attribute_stack.pop(); // get
+		if (type1 == 1 && type2 == 0)
+		{
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.push_back("getd");
+			result.type = 0;
+		}
+		else
+			throw(string("Type mismatch in get function"));
+		break;
+
+	case 47: // {"<Test>", {"<E>", "rel", "<E>"}}
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // rel
+		relation = attribute_stack.top().relation;
+		attribute_stack.pop(); // T
+		p2 = attribute_stack.top().program;
+		type2 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		if (type1 == type2)
+		{
+			result.program.insert(result.program.end(), p2.begin(), p2.end());
+			result.program.insert(result.program.end(), p1.begin(), p1.end());
+			result.program.push_back(relation);
+			result.type = 0;
+		}
+		else
+			throw(string("Type mismatch in relational operation"));
+		break;
+
+	case 48: // { "<TYPE>", { "int" } }
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // int
+		result.type = 0;
+		break;
+
+	case 49: // { "<TYPE>", { "bignumber" } }
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // bignumber
+		result.type = 1;
+		break;
+	default:
+		throw(string("Unknown rule number in grouping by rule"));
+		break;
+		
+	}
+
+	return result;
+
+}
+
+stack<Sintax::attribute_word> Sintax::del_rule(stack<attribute_word>& attribute_stack, int number_rule)
+{
+	if (vec_rules[number_rule].second[0] != "eps")
+	{
+		for (int i = 0; i < 2 * vec_rules[number_rule].second.size(); i++)
+		{
+			if (attribute_stack.empty())
+				throw(string("Stack underflow during reduction"));
+			attribute_stack.pop();
+		}
+	}
+	return attribute_stack;
+}
+
+stack<Sintax::attribute_word> Sintax::del_n_elements(stack<attribute_word>& attribute_stack, int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		if (attribute_stack.empty())
+			throw(string("Stack underflow during reduction"));
+		attribute_stack.pop();
+	}
+
+	return attribute_stack;
+}
+
+bool Sintax::S_more_I(string a)
+{
+	string b = "2147483647";
+	if (a.size() != b.size())
+	{
+		return (a.size() > b.size());
+	}
+	for (auto i : a)
+	{
+		if (a > b)
+			return a > b;
+	}
+	return false;
+}
+
