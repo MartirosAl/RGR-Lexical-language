@@ -4,9 +4,7 @@ pop a
 push a
 push b
 >
-ji 7
-jmp 10
+ji 9
+jmp 11
 
-
-jmp 2
-
+jmp 4

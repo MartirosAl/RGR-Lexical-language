@@ -1008,7 +1008,6 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	action_stack.push(attribute_word("0"));
 	att_word = Token_processing(table_tokens[0]);
 	int token_index = 0;
-	int size_program = 0;
 
 	int TEST_COUNTER = 0;
 
@@ -1028,7 +1027,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 
 			//TEST//
 			if (token_index < table_tokens.size())
-				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << " | size: " << size_program << endl << "stack: ";
+				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
 			else
 				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
 			Print_Attribute_Stack(action_stack);
@@ -1045,7 +1044,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 			}
 			else if (action_cell == "a")
 			{
-				att_word = Grouping_by_rule(action_stack, 0, size_program);
+				att_word = Grouping_by_rule(action_stack, 0);
 				break;
 			}
 			else if (isdigit(action_cell[0]) && stoi(action_cell) >= 0 && stoi(action_cell) < TabAn.rows.size())
@@ -1053,8 +1052,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 				int rule_idx = stoi(action_cell);
 				rules_used.push_back(rule_idx);
 
-				att_word = Grouping_by_rule(action_stack, rule_idx, size_program);
-				size_program = att_word.program.size();
+				att_word = Grouping_by_rule(action_stack, rule_idx);
 
 				int temp_T = stoi(action_stack.top().word);
 				action_stack.push(att_word);
@@ -1290,7 +1288,7 @@ void Sintax::Write_GO_TO_args(list<for_goto> go_to_args, ofstream& file)
 	}
 }
 
-Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule, int number_line)
+Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule)
 {
 	attribute_word result(vec_rules[number_rule].first);
 
@@ -1307,6 +1305,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 	vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
 	vector<int> labels;
 	int temp_counter = 0;
+	int number_line;
 
 
 	switch (number_rule)
@@ -1393,21 +1392,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 6: // {"<Program>", {"eps"}}
 		del_rule(attribute_stack, number_rule);
-
-		result.program.push_back("");
-
 		break;
 
 	case 7: // {"<Operation>", {";"}
-
-
 		del_rule(attribute_stack, number_rule);
 		result.program.push_back("");
+
 		break;
 
 	case 8: // {"<Operation>", {"<Assignment>"}}
-
-
 		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
 		attribute_stack.pop(); // <Assignment>
@@ -1445,6 +1438,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("pop " + (*adress_var1).first);
+
 		break;
 
 	case 20: // {"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}}
@@ -1473,6 +1467,8 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		if (type2 != type3)
 			throw(string("Type mismatch in while"));
+		
+		number_line = Count_rows_until_nonterminals(attribute_stack);
 
 		new_label1 = number_line;
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
@@ -1484,6 +1480,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		result.program.push_back("jmp " + to_string(new_label3));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("jmp " + to_string(new_label1));
+
 		break;
 
 	case 21: // { "<for>", { "for", "V", "from", "<E>", "to", "<E>", "<byE>", "do", "<Program>", "od", ";" } }
@@ -1524,6 +1521,8 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		if (type2 != type3 || type2 != type4 || type2 != (*adress_var5).second.index())
 			throw(string("Type mismatch in for"));
+
+		number_line = Count_rows_until_nonterminals(attribute_stack);
 
 		if ((*adress_var5).second.index() == 0)
 		{
@@ -1611,6 +1610,8 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
+		number_line = Count_rows_until_nonterminals(attribute_stack);
+
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
 		new_label1 = number_line + result.program.size() + 1 + p2.size() + 1;
 		result.program.push_back("ji " + to_string(new_label1));
@@ -1639,6 +1640,8 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
+		number_line = Count_rows_until_nonterminals(attribute_stack);
+
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		new_label1 = number_line + result.program.size() + 2;
 		result.program.push_back("ji " + to_string(new_label1));
@@ -1656,7 +1659,6 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // V
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // input
-
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) != declared_variables.end())
 			throw (string("The variable declaration is missing"));
@@ -1678,6 +1680,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("write");
+
 		break;
 
 	case 28: // {"<label>", {"L"}}
@@ -1685,15 +1688,18 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		name_label = *(attribute_stack.top().adress_label);
 		attribute_stack.pop(); // gotoL
 
+		number_line = Count_rows_until_nonterminals(attribute_stack);
+
 		if (find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label)) != number_lines_labels.end())
 		{
 			// Если сначала была goto, а только сейчас встретиласть label
-			find( number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label) )->number_line = result.program.size();
+			find( number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label) )->number_line = number_line;
 		}
 		else
 		{
 			number_lines_labels.push_back(LabelInfo(name_label, result.program.size()));
 		}
+
 		break;
 
 	case 29: //{ "<transition>", { "gotoL", ";" } }
@@ -1745,6 +1751,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 			result.program.push_back("=");
 			result.program.push_back("ji " + labels[temp_counter]);
 			temp_counter++;
+
 		}
 		if (flag_otherwise == 0)
 			result.program.push_back("jmp " + end_label);
@@ -1833,11 +1840,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		del_rule(attribute_stack, number_rule);
 
 		result.program.push_back("end");
+
 		break;
 
 	case 35: // {"<comment>", {"rem"}}
 		del_rule(attribute_stack, number_rule);
+
 		result.program.push_back("");
+
 		break;
 
 	case 36: // {"<E>", {"<E>", "+", "<T>"}}
@@ -1851,15 +1861,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <E>
-		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("+");
-			result.type = type1;
-		}
-		else
+
+		if (type1 != type2)
 			throw(string("Type mismatch in addition"));
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("+");
+		result.type = type1;
+
 		break;
 
 	case 37: // {"<E>", {"<E>", "-", "<T>"}}
@@ -1873,15 +1883,16 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <E>
-		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("-");
-			result.type = type1;
-		}
-		else
+
+		if (type1 != type2)
 			throw(string("Type mismatch in subtraction"));
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("-");
+		result.type = type1;
+
+
 		break;
 
 	case 38: // {"<E>", {"<T>"}}
@@ -1917,15 +1928,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
-		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("*");
-			result.type = type1;
-		}
-		else
+
+		if (type1 != type2)
 			throw(string("Type mismatch in multiplication"));
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("*");
+		result.type = type1;
+
 		break;
 
 	case 41: // {"<T>", {"<T>", "/", "<F>"}}
@@ -1939,15 +1950,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
-		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("/");
-			result.type = type1;
-		}
-		else
+
+		if (type1 != type2)
 			throw(string("Type mismatch in division"));
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("/");
+		result.type = type1;
+
 		break;
 
 	case 42: // {"<T>", {"<T>", "%", "<F>"}}
@@ -1961,15 +1972,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
-		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("%");
-			result.type = type1;
-		}
-		else
+		if (type1 != type2)
 			throw(string("Type mismatch in modulus"));
+		
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("%");
+		result.type = type1;
+
 		break;
 
 	case 43: // {"<T>", {"<F>"}}
@@ -1977,6 +1987,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		p1 = attribute_stack.top().program;
 		attribute_stack.pop(); // <F>
+
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.type = type1;
 		break;
@@ -1986,13 +1997,16 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		adress_var1 = attribute_stack.top().adress_var;
 		attribute_stack.pop(); // V
 
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) == declared_variables.end())
+			throw (string("The variable declaration is missing"));
+
 		if ((*adress_var1).second.index() == 0)
 			result.program.push_back("push " + (*adress_var1).first);
-		else if ((*adress_var1).second.index() == 1)
+		else
 			result.program.push_back("pushbn " + (*adress_var1).first);
-		else 
-			throw (string("The variable declaration is missing"));
+
 		result.type = (*adress_var1).second.index();
+
 		break;
 
 	case 45: // {"<F>", {"C"}}
@@ -2000,11 +2014,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		adress_const1 = *attribute_stack.top().adress_const;
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // C
+
 		if (type1 == 0)
 			result.program.push_back("push " + to_string(get<0>(adress_const1)));
 		else if (type1 == 1)
 			result.program.push_back("pushbn " + to_string(get<1>(adress_const1)));
+
 		result.type = type1;
+
 		break;
 
 	case 46: // { "<F>", { "get", "(", "<E>", ",", "<E>", ")" } }
@@ -2023,15 +2040,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // (
 		attribute_stack.pop(); // get
-		if (type1 == 1 && type2 == 0)
-		{
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.push_back("getd");
-			result.type = 0;
-		}
-		else
+
+		if (!(type1 == 1 && type2 == 0))
 			throw(string("Type mismatch in get function"));
+
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.push_back("getd");
+		result.type = 0;
+
 		break;
 
 	case 47: // {"<Test>", {"<E>", "rel", "<E>"}}
@@ -2046,15 +2063,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <E>
+
 		if (type1 == type2)
-		{
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back(relation);
-			result.type = 0;
-		}
-		else
 			throw(string("Type mismatch in relational operation"));
+
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back(relation);
+		result.type = 0;
+
 		break;
 
 	case 48: // { "<TYPE>", { "int" } }
@@ -2068,6 +2085,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // bignumber
 		result.type = 1;
 		break;
+
 	default:
 		throw(string("Unknown rule number in grouping by rule"));
 		break;
@@ -2102,6 +2120,22 @@ stack<Sintax::attribute_word> Sintax::del_n_elements(stack<attribute_word>& attr
 	}
 
 	return attribute_stack;
+}
+
+int Sintax::Count_rows_until_nonterminals(stack<attribute_word> attribute_stack)
+{
+	int result = 1; // Т.к. начало с 1
+	while (!attribute_stack.empty())
+	{
+		attribute_stack.pop(); // T
+		if (!attribute_stack.empty())
+		{
+			result += attribute_stack.top().program.size();
+			attribute_stack.pop();
+		}
+	}
+
+	return result;
 }
 
 bool Sintax::S_more_I(string a)

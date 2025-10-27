@@ -353,9 +353,11 @@ protected:
 
 	bool S_more_I(string a);
 
-	attribute_word Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule, int number_line);
+	attribute_word Grouping_by_rule(stack<attribute_word>& attribute_stack, int number_rule);
 
 	stack<attribute_word> del_rule(stack<attribute_word>& attribute_stack, int number_rule);
 
 	stack<attribute_word> del_n_elements(stack<attribute_word>& attribute_stack, int n);
+
+	int Count_rows_until_nonterminals(stack<attribute_word> attribute_stack);
 };
