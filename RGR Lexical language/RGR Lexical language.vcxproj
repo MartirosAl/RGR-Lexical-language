@@ -142,21 +142,20 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="File for writing.txt" />
-    <Text Include="Grammar.txt" />
-    <Text Include="Grammar_test1.txt" />
-    <Text Include="Grammar_test2.txt" />
-    <Text Include="Grammar_test3.txt" />
     <Text Include="OUT.txt" />
-    <Text Include="Test1.txt" />
-    <Text Include="Test2.txt" />
-    <Text Include="Test3.txt" />
-    <Text Include="Test5.txt" />
     <Text Include="TestL1.txt" />
     <Text Include="TestL2.txt" />
     <Text Include="TestL3.txt" />
+    <Text Include="TestL5.txt" />
+    <Text Include="TestS1.txt" />
+    <Text Include="TestS2.txt" />
+    <Text Include="TestS3.txt" />
+    <Text Include="TestS4.txt" />
+    <Text Include="TestS5.txt" />
+    <Text Include="TestS6.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Test4.txt" />
+    <None Include="TestL4.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

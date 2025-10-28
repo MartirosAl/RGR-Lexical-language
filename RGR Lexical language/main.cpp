@@ -10,7 +10,7 @@ int main()
 
    Sintax A;
    
-   bool res = A.Translation_of_code("TestL3.txt", "OUT.txt");
+   bool res = A.Translation_of_code("TestS6.txt", "OUT.txt");
    cout << endl << res << endl;
    return 0;
 }

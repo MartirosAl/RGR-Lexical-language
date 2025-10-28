@@ -20,7 +20,7 @@ protected:
 	/*02*/{"<Ads>", {"eps"}},
 	/*03*/{"<ads>", {"V", "as", "<TYPE>", ",", "<ads>"}},
 	/*04*/{"<ads>", {"V", "as", "<TYPE>"}},
-	/*05*/{"<Program>", {"<Operation>", "<Program>"}},
+	/*05*/{"<Program>", {"<Operation>", "<Program>"}}, 
 	/*06*/{"<Program>", {"eps"}},
 	/*07*/{"<Operation>", {";"}},
 	/*08*/{"<Operation>", {"<Assignment>"}},
@@ -41,29 +41,29 @@ protected:
 	/*23*/{"<byE>", {"eps"}},
 	/*24*/{"<if>", {"if", "(", "<Test>", ")", "<Program>", "else", "<Program>", "fi", ";"}},
 	/*25*/{"<if>", {"if", "(", "<Test>", ")", "<Program>", "fi", ";"}},
-	/*0*/{"<input>", {"input", "V", ";"}},
-	/*0*/{"<print>", {"print", "<E>", ";"}},
-	/*0*/{"<label>", {"L"}},
-	/*0*/{"<transition>", {"gotoL", ";"}},
+	/*26*/{"<input>", {"input", "V", ";"}},
+	/*27*/{"<print>", {"print", "<E>", ";"}},
+	/*28*/{"<label>", {"L"}},
+	/*29*/{"<transition>", {"gotoL", ";"}},
 	/*30*/{"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}},
-	/*0*/{"<case>", {"case", "C", ":", "<Program>", "<case>"}},
-	/*0*/{"<case>", {"case", "C", ":", "<Program>"}},
-	/*0*/{"<case>", {"otherwise", ":", "<Program>"}},
-	/*0*/{"<exception>", {"raise", ";"}},
+	/*31*/{"<case>", {"case", "C", ":", "<Program>", "<case>"}},
+	/*32*/{"<case>", {"case", "C", ":", "<Program>"}},
+	/*33*/{"<case>", {"otherwise", ":", "<Program>"}},
+	/*35*/{"<exception>", {"raise", ";"}},
 	/*35*/{"<comment>", {"rem"}},
-	/*0*/{"<E>", {"<E>", "+", "<T>"}},
-	/*0*/{"<E>", {"<E>", "-", "<T>"}},
-	/*0*/{"<E>", {"<T>"}},
-	/*0*/{"<E>", {"(", "<E>", ")"}},
+	/*36*/{"<E>", {"<E>", "+", "<T>"}},
+	/*37*/{"<E>", {"<E>", "-", "<T>"}},
+	/*38*/{"<E>", {"<T>"}},
+	/*39*/{"<E>", {"(", "<E>", ")"}},
 	/*40*/{"<T>", {"<T>", "*", "<F>"}},
-	/*0*/{"<T>", {"<T>", "/", "<F>"}},
-	/*0*/{"<T>", {"<T>", "%", "<F>"}},
-	/*0*/{"<T>", {"<F>"}},
-	/*0*/{"<F>", {"V"}},
+	/*41*/{"<T>", {"<T>", "/", "<F>"}},
+	/*42*/{"<T>", {"<T>", "%", "<F>"}},
+	/*43*/{"<T>", {"<F>"}},
+	/*44*/{"<F>", {"V"}},
 	/*45*/{"<F>", {"C"}},
-	/*0*/{"<F>", {"get", "(", "<E>", ",", "<E>", ")"}},
-	/*0*/{"<Test>", {"<E>", "rel", "<E>"}},
-	/*0*/{"<TYPE>", {"int"}},
+	/*46*/{"<F>", {"get", "(", "<E>", ",", "<E>", ")"}},
+	/*47*/{"<Test>", {"<E>", "rel", "<E>"}},
+	/*48*/{"<TYPE>", {"int"}},
 	/*49*/{"<TYPE>", {"bignumber"}}
 
 	};
@@ -188,11 +188,12 @@ protected:
 		int end_label;
 		int type; // int = 0, bignumber = 1
 		string relation;
-		vector<string>::iterator adress_label;
+		list<string>::iterator adress_label;
 		set<variant<int, BigNumber>>::iterator adress_const;
 		set<variant<int, BigNumber>>::iterator adress_const2;
 		map<string, variant<int, BigNumber>>::iterator adress_var;
 		bool flag_otherwise = 0;
+		int number_line; // Используется для обработки ошибок, чтобы выдавать номер строки
 
 		attribute_word()
 		{
@@ -220,24 +221,24 @@ protected:
 
 	struct LabelInfo
 	{
-		string label_name;
+		list<string>::iterator label;
 		int number_line;
 
-		LabelInfo(string name)
+		LabelInfo(list<string>::iterator label_)
 		{
-			label_name = name;
+			label = label_;
 			number_line = -1;
 		}
 
-		LabelInfo(string name, int line)
+		LabelInfo(list<string>::iterator label_, int line)
 		{
-			label_name = name;
+			label = label_;
 			number_line = line;
 		}
 
 		bool operator==(const LabelInfo& other) const
 		{
-			return label_name == other.label_name && number_line == other.number_line;
+			return label == other.label && number_line == other.number_line;
 		}
 
 	};
@@ -245,6 +246,7 @@ protected:
 	vector<LabelInfo> number_lines_labels;
 	vector<map<string, variant<int, BigNumber>>::iterator> declared_variables;
 
+	int Number_Stack_Lines = 0;
 
 
 public:

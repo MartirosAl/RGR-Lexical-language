@@ -41,7 +41,9 @@ BigNumber::BigNumber(const vector<short> number_, const size_t size_)
    size = size_;
 
    for (i = 0; i < size; i++)
-      number[i] = number_[i];
+   {
+       number[i] = number_[i];
+   }
 }
 
 BigNumber::~BigNumber()

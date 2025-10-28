@@ -43,33 +43,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Test1.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Test2.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Test3.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Test5.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Grammar.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Grammar_test1.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="File for writing.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Grammar_test2.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="Grammar_test3.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
     <Text Include="TestL1.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
@@ -79,12 +52,36 @@
     <Text Include="TestL3.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="TestL5.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="File for writing.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS1.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS3.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
     <Text Include="OUT.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS4.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS5.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestS6.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Test4.txt">
+    <None Include="TestL4.txt">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

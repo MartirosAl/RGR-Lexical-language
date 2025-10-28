@@ -6,6 +6,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <list>
 
 #include "BigNumber.h"
 using namespace std;
@@ -142,7 +143,7 @@ protected:
         //get<1> is the cell for the table of constants.
         //get<2> is the cell for the variable table.
         //get<3> is the cell for the label table.
-        variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> value = " ";
+        variant<string, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, list<string>::iterator> value = " ";
         // Итератор на второй аргумент функции get (для токенов типа GET, где требуется два аргумента-константы)
         set<variant<int, BigNumber>>::iterator second_argument_get;
         int number_line = 0;
@@ -175,7 +176,7 @@ protected:
 
     //Таблица меток
     //Table of lables(labels)
-    vector<string> table_labels;
+    list<string> table_labels;
 
     //Таблица лексем для вывода
     //Вектор вариантов (int, set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator)
@@ -258,7 +259,7 @@ protected:
     //get<0> - iterator(pointer) to the table of constants
     //get<1> - iterator(pointer) to the table of variables
     //get<2> - iterator(pointer) to the table of labels
-    variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, vector<string>::iterator> register_indicator;
+    variant<set<variant<int, BigNumber>>::iterator, map<string, variant<int, BigNumber>>::iterator, list<string>::iterator> register_indicator;
 
     //Номер строки хранит номер текущей строки в программе
     //Line number stores the number of the current line in the program

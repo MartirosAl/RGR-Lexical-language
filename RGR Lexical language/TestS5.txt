@@ -1,0 +1,2 @@
+declare b as BigNumber;
+b = 11111111111111112;

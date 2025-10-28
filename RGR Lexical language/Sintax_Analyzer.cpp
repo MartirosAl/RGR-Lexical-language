@@ -1,6 +1,6 @@
-п»ї#include "Sintax_Analyzer.h"
+#include "Sintax_Analyzer.h"
 
-// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєР»Р°СЃСЃР° Sintax
+// Конструктор класса Sintax
 Sintax::Sintax()
 {
 	ofstream File_for_writing("File for writing.txt");
@@ -15,7 +15,7 @@ Sintax::Sintax()
 	Write_Rules(File_for_writing);
 	File_for_writing << endl;
 
-	//РЎРѕР·РґР°РЅРёРµ РІСЃРµС… First РјРЅРѕР¶РµСЃС‚РІ
+	//Создание всех First множеств
 	Firsts = All_FIRSTs();
 
 	Write_Firsts(Firsts, File_for_writing);
@@ -26,12 +26,12 @@ Sintax::Sintax()
 	Write_Terminals(File_for_writing);
 	File_for_writing << endl;
 
-	// РЎРѕР·РґР°РЅРёРµ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹С… С‚Р°Р±Р»РёС† РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
-	СЃanonical_table_system = Create_Tables();
+	// Создание вспомогательных таблиц для синтаксического анализа
+	сanonical_table_system = Create_Tables();
 
-	for (auto& i : СЃanonical_table_system)
+	for (auto& i : сanonical_table_system)
 	{
-		Write_РЎanonical_Table_System(i, File_for_writing);
+		Write_Сanonical_Table_System(i, File_for_writing);
 	}
 	File_for_writing << endl;
 
@@ -42,8 +42,8 @@ Sintax::Sintax()
 	}
 	File_for_writing << endl;
 
-	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚Р°Р±Р»РёС‡РЅРѕРіРѕ Р°РЅР°Р»РёР·Р°С‚РѕСЂР°
-	TabAn = tabular_analyzer((int)СЃanonical_table_system.size(), (int)terminals.size(), (int)nonterminals.size());
+	// Инициализация табличного анализатора
+	TabAn = tabular_analyzer((int)сanonical_table_system.size(), (int)terminals.size(), (int)nonterminals.size());
 
 	try 
 	{
@@ -67,14 +67,14 @@ Sintax::~Sintax()
 	terminals.clear();
 }
 
-// РЎРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ Рё Р·Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹
+// Сообщение об ошибке и завершение работы
 void Sintax::Error(string error_text)
 {
 	cerr << "Error: " << error_text << endl;
 	exit(EXIT_FAILURE);
 }
 
-// РЎРѕР·РґР°РЅРёРµ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹С… С‚Р°Р±Р»РёС† РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
+// Создание вспомогательных таблиц для синтаксического анализа
 vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 {
 	string start_nonterminal = "<S>";
@@ -82,12 +82,12 @@ vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 	vector<canonical_table> start_table;
 	list<for_goto> table_goto_args;
 
-	// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†С‹
+	// Формирование стартовой таблицы
 	start_table = Start_Table(start_nonterminal);
 
 	rules.push_back(auxiliary_table(start_table, for_goto(-1, start_nonterminal), 0));
 
-	// РџРѕРёСЃРє РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ, СЃР»РµРґСѓСЋС‰РёС… Р·Р° С‚РѕС‡РєРѕР№ РІ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†Рµ
+	// Поиск всех нетерминалов, следующих за точкой в стартовой таблице
 	for (auto& i : Find_All_Goto(start_table, 0))
 	{
 		if (find(table_goto_args.begin(), table_goto_args.end(), i) == table_goto_args.end())
@@ -96,20 +96,20 @@ vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 		}
 	}
 
-	// РћСЃРЅРѕРІРЅРѕР№ С†РёРєР» РїРѕ СЃРѕР·РґР°РЅРёСЋ РІСЃРµС… С‚Р°Р±Р»РёС†
+	// Основной цикл по созданию всех таблиц
 	for (auto& i : table_goto_args)
 	{
 		vector<canonical_table> temp_vct;
 		canonical_table temp_ct;
 
-		// РџСѓСЃС‚С‹Рµ РїСЂР°РІРёР»Р° РЅРµ С‚СЂРѕРіР°РµРј
+		// Пустые правила не трогаем
 		if (i.symbol == "eps")
 			continue;
 
-		// Р’С‹С‡РёСЃР»РµРЅРёРµ GOTO РґР»СЏ С‚РµРєСѓС‰РµРіРѕ Р°СЂРіСѓРјРµРЅС‚Р°
+		// Вычисление GOTO для текущего аргумента
 		vector<canonical_table> goto_result = GOTO(i, rules[i.number_table].rules);
 
-		// РџСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РёРµ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ С‚Р°Р±Р»РёС†С‹ СЃ С‚Р°РєРёРј Р¶Рµ СЃРѕРґРµСЂР¶РёРјС‹Рј
+		// Проверка на наличие уже существующей таблицы с таким же содержимым
 		auto find_b = find_if(
 			rules.begin(),
 			rules.end(),
@@ -118,17 +118,17 @@ vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 				return a.rules == goto_result;
 			});
 
-		// Р•СЃР»Рё С‚Р°РєР°СЏ С‚Р°Р±Р»РёС†Р° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, РїСЂРѕРїСѓСЃРєР°РµРј РµС‘
+		// Если такая таблица уже существует, пропускаем её
 		if (find_b != rules.end())
 		{
 			not_included_tables.push_back(auxiliary_table(goto_result, i, (*find_b).number_table));
 			continue;
 		}
-		// Р•СЃР»Рё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ С‚Р°Р±Р»РёС†Сѓ
+		// Если не существует, создаём новую таблицу
 		rules.push_back(auxiliary_table(goto_result, i, rules.size()));
 		
 
-		// Р’С‹СЃС‡РёС‚С‹РІР°РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚РѕРІ goto РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РёС… С‚Р°Р±Р»РёС† 
+		// Высчитываение аргументов goto для последующих таблиц 
 		list<canonical_table> result_list(goto_result.begin(), goto_result.end());
 		for (auto& j : result_list)
 		{
@@ -143,7 +143,7 @@ vector<Sintax::auxiliary_table> Sintax::Create_Tables()
 		}
 	}
 
-	//Р—Р°РјРµРЅР° РІСЃРµ РїСѓСЃС‚С‹С€РєРё РІ following РЅР° "eps"
+	//Замена все пустышки в following на "eps"
 	for (int i = 0; i < rules.size(); i++)
 	{
 		for (int j = 0; j < rules[i].rules.size(); j++)
@@ -171,10 +171,10 @@ vector<vector<string>> Sintax::All_FIRSTs()
 	return result;
 }
 
-// Р’С‹С‡РёСЃР»РµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° FIRST РґР»СЏ РЅРµС‚РµСЂРјРёРЅР°Р»Р°
+// Вычисление множества FIRST для нетерминала
 vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 {
-	// Р•СЃР»Рё СѓР¶Рµ Р±С‹Р»Рё РІ СЌС‚РѕРј РЅРµС‚РµСЂРјРёРЅР°Р»Рµ РЅР° СЌС‚РѕРј РїСѓС‚Рё вЂ” РїСЂРµРґРѕС‚РІСЂР°С‰Р°РµРј Р·Р°С†РёРєР»РёРІР°РЅРёРµ
+	// Если уже были в этом нетерминале на этом пути — предотвращаем зацикливание
 	if (visited.count(nonterminal))
 		return {};
 
@@ -190,7 +190,7 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 	for (int i = temp_index; i < find_by_key_end(vec_rules, nonterminal); i++)
 	{
 		words.clear();
-		// РџСЂРµРґРїРѕР»РѕРіР°РµРј, С‡С‚Рѕ Р»РёС€РЅРёРµ eps СѓРґР°Р»РµРЅС‹ 
+		// Предпологаем, что лишние eps удалены 
 		if (vec_rules[i].second.size() == 1 && vec_rules[i].second[0] == "eps")
 			res.push_back({ "eps" });
 		for (int j = 0; j < vec_rules[i].second.size(); j++)
@@ -203,7 +203,7 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 			}
 			else
 			{
-				// РџРµСЂРµРґР°С‘Рј visited РґР°Р»СЊС€Рµ!
+				// Передаём visited дальше!
 				vector<string> temp = FIRST_One(vec_rules[i].second[j], visited);
 
 				for (auto& v : temp)
@@ -221,7 +221,7 @@ vector<string> Sintax::FIRST_One(string nonterminal, set<string> visited)
 		}		
 	}
 
-	// РЈРґР°Р»РµРЅРёРµ РїРѕРІС‚РѕСЂРѕРІ РІ res
+	// Удаление повторов в res
 	res = Delete_Repetitions(res);
 
 	return res;
@@ -310,12 +310,13 @@ void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& f
 			file << " ";
 		file << "|";
 	}
-
 	file << endl;
+
+	
 
 	for (int i = 0; i < TabAn.rows.size(); i++)
 	{
-		//РќРѕРјРµСЂ СЃС‚СЂРѕРєРё
+		//Номер строки
 		file << TabAn.rows[i].number_row;
 		for (int v = to_string(TabAn.rows[i].number_row).size(); v < min_size; v++)
 			file << " ";
@@ -333,7 +334,7 @@ void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& f
 
 		file << "||";
 
-		//РќРµС‚РµСЂРјРёРЅР°Р»С‹ g
+		//Нетерминалы g
 		for (int j = 0; j < nonterminals.size(); j++)
 		{
 			if (TabAn.rows[i].g[j] == -1)
@@ -346,8 +347,8 @@ void Sintax::Write_Tabular_analyzer(Sintax::tabular_analyzer& TabAn, ofstream& f
 			file << "|";
 		}
 
-		//РўРµСЂРјРёРЅР°Р»С‹ g (Р±РµР· eps)
-		for (int j = nonterminals.size(); j < (nonterminals.size() + terminals.size() - 1) /*Р±РµР· СЌРїСЃ*/; j++)
+		//Терминалы g (без eps)
+		for (int j = nonterminals.size(); j < (nonterminals.size() + terminals.size() - 1) /*без эпс*/; j++)
 		{
 			if (TabAn.rows[i].g[j] == -1)
 				file << "- ";
@@ -414,7 +415,7 @@ vector<string> Sintax::Replacing_Eps(vector<string> to, vector<string> from)
 
 }
 
-// РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕРєР° РЅРµС‚РµСЂРјРёРЅР°Р»РѕРј
+// Проверка, является ли строка нетерминалом
 bool Sintax::IsNonterminal(string s)
 {
 	if (find(nonterminals.begin(), nonterminals.end(), s) != nonterminals.end())
@@ -422,7 +423,7 @@ bool Sintax::IsNonterminal(string s)
 	return false;
 }
 
-// РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕРєР° С‚РµСЂРјРёРЅР°Р»РѕРј
+// Проверка, является ли строка терминалом
 bool Sintax::IsTerminal(string s)
 {
 	if (find(terminals.begin(), terminals.end(), s) != terminals.end())
@@ -432,7 +433,7 @@ bool Sintax::IsTerminal(string s)
 
 vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>& can_t)
 {
-	// РЈРґР°Р»РµРЅРёРµ РґСѓР±Р»РёРєР°С‚РѕРІ РёР· can_t
+	// Удаление дубликатов из can_t
 	vector<canonical_table> unique_can_t;
 	for (const auto& elem : can_t) {
 		if (find(unique_can_t.begin(), unique_can_t.end(), elem) == unique_can_t.end())
@@ -440,7 +441,7 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 	}
 	can_t = move(unique_can_t);
 
-	// РћР±СЉРµРґРёРЅРµРЅРёРµ РїСЂР°РІРёР» СЃ СЂР°Р·РЅС‹РјРё following РІ РѕРґРЅРѕ РїСЂР°РІРёР»Рѕ
+	// Объединение правил с разными following в одно правило
 	list<canonical_table> list_can_t;
 	for (auto& j : can_t)
 	{
@@ -458,14 +459,14 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 				it1->rule == it2->rule &&
 				it1->dot == it2->dot)
 			{
-				// РћР±СЉРµРґРёРЅСЏРµРј following
+				// Объединяем following
 				it1->following.insert(it1->following.end(), it2->following.begin(), it2->following.end());
 
-				// РЈРґР°Р»СЏРµРј РґСѓР±Р»РёРєР°С‚С‹
+				// Удаляем дубликаты
 				sort(it1->following.begin(), it1->following.end());
 				it1->following.erase(std::unique(it1->following.begin(), it1->following.end()), it1->following.end());
 
-				// РЈРґР°Р»СЏРµРј it2 Рё РїСЂРѕРґРѕР»Р¶Р°РµРј
+				// Удаляем it2 и продолжаем
 				it2 = list_can_t.erase(it2);
 			}
 			else
@@ -480,7 +481,7 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 
 	list_can_t.clear();
 
-	// РЎРѕСЂС‚РёСЂРѕРІРєР° can_t РїРѕ РЅРµС‚РµСЂРјРёРЅР°Р»Сѓ Рё РїСЂР°РІРёР»Сѓ
+	// Сортировка can_t по нетерминалу и правилу
 	//for (int j = can_t.size() - 1; j > 0; j--)
 	//{
 	//	bool swapped = false;
@@ -501,7 +502,7 @@ vector<Sintax::canonical_table> Sintax::Formating_Table(vector<canonical_table>&
 	return can_t;
 }
 
-// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ СЃС‚Р°СЂС‚РѕРІРѕР№ С‚Р°Р±Р»РёС†С‹ РґР»СЏ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
+// Формирование стартовой таблицы для синтаксического анализа
 vector<Sintax::canonical_table> Sintax::Start_Table(string start_nonterminal)
 {
 	list<canonical_table> temp_res;
@@ -551,7 +552,7 @@ vector<Sintax::for_goto> Sintax::Find_All_Goto(const vector<canonical_table>& ca
 	return res;
 }
 
-void Sintax::Print_РЎanonical_Table_System(const auxiliary_table& can_t)
+void Sintax::Print_Сanonical_Table_System(const auxiliary_table& can_t)
 {
 	
 	cout << "A" << can_t.number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
@@ -580,7 +581,7 @@ void Sintax::Print_РЎanonical_Table_System(const auxiliary_table& can_t)
 	cout << "}" << endl << endl;
 }
 
-void Sintax::Write_РЎanonical_Table_System(const auxiliary_table& can_t, ofstream& file)
+void Sintax::Write_Сanonical_Table_System(const auxiliary_table& can_t, ofstream& file)
 {
 	if (can_t.goto_from.number_table != -1)
 		file << "A" << can_t.number_table << " = GOTO (" << "A" << can_t.goto_from.number_table << "," << can_t.goto_from.symbol << ")" << " = {" << endl;
@@ -611,13 +612,13 @@ void Sintax::Write_РЎanonical_Table_System(const auxiliary_table& can_t, ofstrea
 	file << "}" << endl << endl;
 }
 
-// Р РµР°Р»РёР·Р°С†РёСЏ С„СѓРЅРєС†РёРё GOTO РґР»СЏ LR(1)-Р°РЅР°Р»РёР·Р°С‚РѕСЂР°
+// Реализация функции GOTO для LR(1)-анализатора
 vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<canonical_table>& can_t)
 {
 	vector<canonical_table> res;
 	list<canonical_table> queue;
 
-	// РЎРґРІРёРіР°РµРј С‚РѕС‡РєСѓ РЅР° СЃРёРјРІРѕР» args.symbol
+	// Сдвигаем точку на символ args.symbol
 	for (const auto& item : can_t)
 	{
 		if (item.dot < item.rule.size() && item.rule[item.dot] == args.symbol)
@@ -642,14 +643,14 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 		{
 			string B = current.rule[current.dot];
 
-			// Р’С‹С‡РёСЃР»СЏРµРј lookahead РґР»СЏ РЅРѕРІС‹С… РїСЂР°РІРёР» B
+			// Вычисляем lookahead для новых правил B
 			vector<string> lookahead;
 			if (current.dot + 1 < current.rule.size())
 			{
-				// ОІ = СЃРёРјРІРѕР»С‹ РїРѕСЃР»Рµ B
+				// ? = символы после B
 				vector<string> beta(current.rule.begin() + current.dot + 1, current.rule.end());
 
-				// FIRST(ОІ)
+				// FIRST(?)
 				for (const auto& sym : beta)
 				{
 					if (IsTerminal(sym))
@@ -662,7 +663,7 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 						for (const auto& x : Firsts[Nonterminal_number(sym)])
 							lookahead.push_back(x);
 
-						// РµСЃР»Рё FIRST(sym) РЅРµ СЃРѕРґРµСЂР¶РёС‚ eps, РґР°Р»СЊС€Рµ РЅРµ РёРґС‘Рј
+						// если FIRST(sym) не содержит eps, дальше не идём
 						if (find(Firsts[Nonterminal_number(sym)].begin(),
 							Firsts[Nonterminal_number(sym)].end(),
 							"eps") == Firsts[Nonterminal_number(sym)].end())
@@ -670,7 +671,7 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 					}
 				}
 
-				// Р•СЃР»Рё ОІ РјРѕР¶РµС‚ РїРѕСЂРѕРґРёС‚СЊ eps, РґРѕР±Р°РІР»СЏРµРј lookahead РёР· С‚РµРєСѓС‰РµРіРѕ
+				// Если ? может породить eps, добавляем lookahead из текущего
 				if (find(lookahead.begin(), lookahead.end(), "eps") != lookahead.end())
 				{
 					lookahead.erase(remove(lookahead.begin(), lookahead.end(), "eps"), lookahead.end());
@@ -679,14 +680,14 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 			}
 			else
 			{
-				// Р•СЃР»Рё РїРѕСЃР»Рµ B РЅРёС‡РµРіРѕ РЅРµС‚, lookahead = current.following
+				// Если после B ничего нет, lookahead = current.following
 				lookahead = current.following;
 			}
 
-			// РЈРґР°Р»СЏРµРј РґСѓР±Р»РёРєР°С‚С‹
+			// Удаляем дубликаты
 			lookahead = Delete_Repetitions(lookahead);
 
-			// Р”РѕР±Р°РІР»СЏРµРј РІСЃРµ РїСЂР°РІРёР»Р° РІРёРґР° B в†’ Оі
+			// Добавляем все правила вида B ? ?
 			for (int r = find_by_key_begin(vec_rules, B); r < find_by_key_end(vec_rules, B); r++)
 			{
 				canonical_table new_item(B, 0, vec_rules[r].second, lookahead);
@@ -708,16 +709,16 @@ vector<Sintax::canonical_table> Sintax::GOTO(const for_goto& args, const vector<
 Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabAn)
 {
 	int find_rule = -1;
-	//РЎРѕР·РґР°РЅРёРµ f
-	for (int i = 0; i < СЃanonical_table_system.size(); i++)
+	//Создание f
+	for (int i = 0; i < сanonical_table_system.size(); i++)
 	{
 		for (int j = 0; j < terminals.size(); j++)
 		{
-			for (auto& v : СЃanonical_table_system[i].rules)
+			for (auto& v : сanonical_table_system[i].rules)
 			{
 				if (v.dot == v.rule.size() && v.nonterminal == "<S>")
 				{
-					//Р”РѕРїСѓСЃРє, СЃРєРѕСЂРµРµ РІСЃРµРіРѕ following Р±СѓРґРµС‚ РѕРґРёРЅ = eps, РµСЃР»Рё СЌС‚Рѕ С‚Р°Рє, С‚Рѕ РѕРїС‚РёРјРёР·РёСЂРѕРІР°С‚СЊ!
+					//Допуск, скорее всего following будет один = eps, если это так, то оптимизировать!
 					for (auto& w : v.following)
 					{
 						IsCellFull(i, Terminal_number(w), "a");
@@ -752,7 +753,7 @@ Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabA
 				}
 				else if (IsNonterminal(v.rule[v.dot]))
 				{
-					//РџРµСЂРµС…РѕРґ
+					//Переход
 					for (auto& w : Firsts[Nonterminal_number(v.rule[v.dot])])
 					{
 						if (w == "eps")
@@ -763,27 +764,27 @@ Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabA
 				}
 				else if (IsTerminal(v.rule[v.dot]) && v.rule[v.dot] == terminals[j])
 				{
-					//РџРµСЂРµС…РѕРґ
+					//Переход
 					IsCellFull(i, j, "t");
 					TabAn.rows[i].f[j] = "t";
 				}
 				else
 				{
-					//РќРёС‡РµРіРѕ
+					//Ничего
 				}
 			}
 		}
 	}
 
-	//РЎРѕР·РґР°РЅРёРµ g
+	//Создание g
 	for (int i = 0; i < nonterminals.size(); i++)
 	{
-		// РЎ 1 С‚Рє РІ <S> РЅРµС‚ РїРµСЂРµС…РѕРґРѕРІ
-		for (int j = 1; j < СЃanonical_table_system.size(); j++)
+		// С 1 тк в <S> нет переходов
+		for (int j = 1; j < сanonical_table_system.size(); j++)
 		{
-			if (nonterminals[i] == СЃanonical_table_system[j].goto_from.symbol)
+			if (nonterminals[i] == сanonical_table_system[j].goto_from.symbol)
 			{
-				TabAn.rows[СЃanonical_table_system[j].goto_from.number_table].g[i] = j;
+				TabAn.rows[сanonical_table_system[j].goto_from.number_table].g[i] = j;
 			}
 		}
 		for (int j = 0; j < not_included_tables.size(); j++)
@@ -803,12 +804,12 @@ Sintax::tabular_analyzer Sintax::Tabular_analyzer(Sintax::tabular_analyzer& TabA
 			flag_eps = 1;
 		}
 
-		// РЎ 1 С‚Рє РІ <S> РЅРµС‚ РїРµСЂРµС…РѕРґРѕРІ
-		for (int j = 1; j < СЃanonical_table_system.size() - 1; j++)
+		// С 1 тк в <S> нет переходов
+		for (int j = 1; j < сanonical_table_system.size() - 1; j++)
 		{
-			if (terminals[i - nonterminals.size()] == СЃanonical_table_system[j].goto_from.symbol)
+			if (terminals[i - nonterminals.size()] == сanonical_table_system[j].goto_from.symbol)
 			{
-				TabAn.rows[СЃanonical_table_system[j].goto_from.number_table].g[i - flag_eps] = j;
+				TabAn.rows[сanonical_table_system[j].goto_from.number_table].g[i - flag_eps] = j;
 			}
 		}
 		for (int j = 0; j < not_included_tables.size(); j++)
@@ -833,6 +834,7 @@ Sintax::attribute_word Sintax::Token_processing(Token token_)
 	case VARIABLE:
 		result.word = "V";
 		result.adress_var = get<2>(token_.value);
+
 		break;
 
 	case CONSTANT:
@@ -858,7 +860,10 @@ Sintax::attribute_word Sintax::Token_processing(Token token_)
 		break;
 
 	case VARIABLE_TYPE:
-		result.word = get<0>(token_.value);
+		if (get<0>(token_.value) == "int")
+			result.word = "int";
+		else
+			result.word = "bignumber";
 		break;
 
 	case ARITHMETIC_OPERATION:
@@ -981,6 +986,9 @@ Sintax::attribute_word Sintax::Token_processing(Token token_)
 		throw (string("Error in Token processing"));
 		
 	}
+
+	result.number_line = token_.number_line;
+
 	return result;
 }
 
@@ -1003,7 +1011,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	int term_num;
 	string action_cell;
 
-	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїРµСЂРµРјРµРЅРЅС‹С…
+	// Инициализация переменных
 	int T = 0;
 	action_stack.push(attribute_word("0"));
 	att_word = Token_processing(table_tokens[0]);
@@ -1037,10 +1045,9 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 
 			if (action_cell == "t")
 			{
-				
 				token_index++;
 				action_stack.push(att_word);
-				T = TabAn.rows[T].g[nonterminals.size() + term_num - ((term_num < Terminal_number("eps")) ? 0 : 1)]; // Р’ g РЅРµС‚ eps
+				T = TabAn.rows[T].g[nonterminals.size() + term_num - ((term_num < Terminal_number("eps")) ? 0 : 1)]; // В g нет eps
 			}
 			else if (action_cell == "a")
 			{
@@ -1168,11 +1175,11 @@ int Sintax::find_by_key_end(const vector<pair<string, vector<string>>>& vec, con
 	return -1;
 }
 
-bool Sintax::IsCellFull(int pos1, int pos2, string СЃontent)
+bool Sintax::IsCellFull(int pos1, int pos2, string сontent)
 {
-	if (TabAn.rows[pos1].f[pos2] != СЃontent && TabAn.rows[pos1].f[pos2] != "-" && TabAn.rows[pos1].f[pos2].size() != 0)
+	if (TabAn.rows[pos1].f[pos2] != сontent && TabAn.rows[pos1].f[pos2] != "-" && TabAn.rows[pos1].f[pos2].size() != 0)
 	{
-		cerr << "Conflict in table f: T" << pos1 << " on " << terminals[pos2] << " | " << TabAn.rows[pos1].f[pos2] << " and " << СЃontent << endl;
+		cerr << "Conflict in table f: T" << pos1 << " on " << terminals[pos2] << " | " << TabAn.rows[pos1].f[pos2] << " and " << сontent << endl;
 		return true;
 	}
 	return false;
@@ -1196,7 +1203,7 @@ int Sintax::FindRuleInRow(canonical_table rule)
 	return find_rule;
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… РїСЂР°РІРёР» РіСЂР°РјРјР°С‚РёРєРё
+// Печать всех правил грамматики
 void Sintax::Print_Rules()
 {
 	for (auto it = vec_rules.begin(); it != vec_rules.end(); it++)
@@ -1214,7 +1221,7 @@ void Sintax::Print_Rules()
 	}
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… РїСЂР°РІРёР» РіСЂР°РјРјР°С‚РёРєРё
+// Печать всех правил грамматики
 void Sintax::Write_Rules(ofstream& file)
 {
 	for (auto it = vec_rules.begin(); it != vec_rules.end(); it++)
@@ -1228,7 +1235,7 @@ void Sintax::Write_Rules(ofstream& file)
 	}
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ
+// Печать всех нетерминалов
 void Sintax::Print_Nonterminals()
 {
 	cout << "Nonterminals: ";
@@ -1239,7 +1246,7 @@ void Sintax::Print_Nonterminals()
 	cout << endl;
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… РЅРµС‚РµСЂРјРёРЅР°Р»РѕРІ
+// Печать всех нетерминалов
 void Sintax::Write_Nonterminals(ofstream& file)
 {
 	file << "Nonterminals: ";
@@ -1250,7 +1257,7 @@ void Sintax::Write_Nonterminals(ofstream& file)
 	file << endl;
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… С‚РµСЂРјРёРЅР°Р»РѕРІ
+// Печать всех терминалов
 void Sintax::Print_Terminals()
 {
 	cout << "Terminals: ";
@@ -1261,7 +1268,7 @@ void Sintax::Print_Terminals()
 	cout << endl;
 }
 
-// РџРµС‡Р°С‚СЊ РІСЃРµС… С‚РµСЂРјРёРЅР°Р»РѕРІ
+// Печать всех терминалов
 void Sintax::Write_Terminals(ofstream& file)
 {
 	file << "Terminals: ";
@@ -1299,19 +1306,23 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 	set<variant<int, BigNumber>>::iterator adress_int_const1, adress_int_const2, adress_int_const3, adress_int_const4, adress_int_const5;
 	string relation;
 	int new_label1, new_label2, new_label3, new_label4;
-	string name_label;
+	list<string>::iterator adress_label;
 	int end_label;
 	bool flag_otherwise;
 	vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
 	vector<int> labels;
 	int temp_counter = 0;
-	int number_line;
+	int number_line_in_stack;
+	int number_line_in_code;
+
+	bool flag;
+	stack<attribute_word> attribute_stack_copy;
 
 
 	switch (number_rule)
 	{
 	case 0: // {"<S>", {"<Ads>", "<Program>"}}
-		attribute_stack.pop(); // СѓР±РёСЂР°РµРј T
+		attribute_stack.pop(); // убираем T
 		p1 = attribute_stack.top().program;
 		attribute_stack.pop(); // <Program>
 		attribute_stack.pop(); // T
@@ -1323,9 +1334,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 1: // {"<Ads>", {"declare", "<ads>", ";", "<Ads>"}}
 		del_rule(attribute_stack, number_rule);
+		// Здесь нельзя делать проверку на полное соответствие количества всех объявленных пременных с фактическим количеством переменных в программе, 
+		// тк возможна конструкция из нескольких <Ads> подряд и не будет понятно это последняя строчка объявлений или нет
 
-		if (table_variable.size() > declared_variables.size())
-			throw(string("Not all variables are declared"));
 		break;
 
 	case 2: // {"<Ads>", {"eps"}}
@@ -1341,13 +1352,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <TYPE>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // as
 		attribute_stack.pop(); // T
 		adress_var2 = attribute_stack.top().adress_var;
 		attribute_stack.pop(); // V
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var2) != declared_variables.end())
-			throw (string("An attempt to repeat the announcement"));
+			throw (string("An attempt to repeat the announcement. Line " + to_string(number_line_in_code)));
 
 		declared_variables.push_back(adress_var2);
 		if (type1 == 0)
@@ -1361,13 +1373,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <TYPE>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // as
 		attribute_stack.pop(); // T
 		adress_var2 = attribute_stack.top().adress_var;
 		attribute_stack.pop(); // V
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var2) != declared_variables.end())
-			throw (string("An attempt to repeat the announcement"));
+			throw (string("An attempt to repeat the announcement. Line" + to_string(number_line_in_code)));
 
 		declared_variables.push_back(adress_var2);
 		if (type1 == 0)
@@ -1420,6 +1433,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 19: // {"<Assignment>", {"V", "=", "<E>", ";"}}
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
@@ -1432,9 +1446,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // V
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) == declared_variables.end())
-			throw (string("The variable declaration is missing"));
+			throw (string("The variable declaration is missing. Line " + to_string(number_line_in_code)));
 		if ((*adress_var1).second.index() != type1)
-			throw(string("Type mismatch in assignment"));
+			throw(string("Type mismatch in assignment. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("pop " + (*adress_var1).first);
@@ -1443,6 +1457,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 20: // {"<while>", {"while", "<E>", "rel", "<E>", "do", "<Program>", "od", ";"}}
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // od
@@ -1466,17 +1481,17 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // while
 
 		if (type2 != type3)
-			throw(string("Type mismatch in while"));
+			throw(string("Type mismatch in while. Line " + to_string(number_line_in_code)));
 		
-		number_line = Count_rows_until_nonterminals(attribute_stack);
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
-		new_label1 = number_line;
+		new_label1 = number_line_in_stack;
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.push_back(relation);
-		new_label2 = number_line + result.program.size() + 2; // +2 С‚Рє РїРѕСЃР»Рµ Р±СѓРґРµС‚ ji Рё jmp РґРѕ СЃР°РјРѕР№ РјРµС‚РєРё
+		new_label2 = number_line_in_stack + result.program.size() + 2; // +2 тк после будет ji и jmp до самой метки
 		result.program.push_back("ji " + to_string(new_label2));
-		new_label3 = number_line + result.program.size() + 1 + p1.size() + 1; // РґРѕ РјРµС‚РєРё РµС‰Рµ <Program> Рё jmp 
+		new_label3 = number_line_in_stack + result.program.size() + 1 + p1.size() + 1; // до метки еще <Program> и jmp 
 		result.program.push_back("jmp " + to_string(new_label3));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("jmp " + to_string(new_label1));
@@ -1485,6 +1500,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 21: // { "<for>", { "for", "V", "from", "<E>", "to", "<E>", "<byE>", "do", "<Program>", "od", ";" } }
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // od
@@ -1517,26 +1533,26 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var5) == declared_variables.end())
-			throw (string("The variable declaration is missing"));
+			throw (string("The variable declaration is missing. Line " + to_string(number_line_in_code)));
 
 		if (type2 != type3 || type2 != type4 || type2 != (*adress_var5).second.index())
-			throw(string("Type mismatch in for"));
+			throw(string("Type mismatch in for. Line " + to_string(number_line_in_code)));
 
-		number_line = Count_rows_until_nonterminals(attribute_stack);
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
 		if ((*adress_var5).second.index() == 0)
 		{
 			result.program.insert(result.program.end(), p4.begin(), p4.end());
 			result.program.push_back("pop " + (*adress_var5).first);
-			new_label1 = number_line + result.program.size();
+			new_label1 = number_line_in_stack + result.program.size();
 			result.program.push_back("push " + (*adress_var5).first);
 			result.program.insert(result.program.end(), p3.begin(), p3.end());
 			result.program.push_back(">");
-			new_label2 = number_line + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // РїСЂРѕСЃС‡РёС‚С‹РІР°РµРј РІСЃРµ
+			new_label2 = number_line_in_stack + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
 			result.program.push_back("ji " + to_string(new_label2));
-			new_label3 = number_line + result.program.size() + 2 + p2.size() + 3;
+			new_label3 = number_line_in_stack + result.program.size() + 2 + p2.size() + 3;
 			result.program.push_back("jmp " + to_string(new_label3));
-			new_label4 = number_line + result.program.size();
+			new_label4 = number_line_in_stack + result.program.size();
 			result.program.push_back("push " + (*adress_var5).first);
 			result.program.insert(result.program.end(), p2.begin(), p2.end());
 			result.program.push_back("+");
@@ -1549,15 +1565,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		{
 			result.program.insert(result.program.end(), p4.begin(), p4.end());
 			result.program.push_back("pop " + (*adress_var5).first);
-			new_label1 = number_line + result.program.size();
+			new_label1 = number_line_in_stack + result.program.size();
 			result.program.push_back("pushbn " + (*adress_var5).first);
 			result.program.insert(result.program.end(), p3.begin(), p3.end());
 			result.program.push_back(">");
-			new_label2 = number_line + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // РїСЂРѕСЃС‡РёС‚С‹РІР°РµРј РІСЃРµ
+			new_label2 = number_line_in_stack + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
 			result.program.push_back("ji " + to_string(new_label2));
-			new_label3 = number_line + result.program.size() + 2 + p2.size() + 3;
+			new_label3 = number_line_in_stack + result.program.size() + 2 + p2.size() + 3;
 			result.program.push_back("jmp " + to_string(new_label3));
-			new_label4 = number_line + result.program.size();
+			new_label4 = number_line_in_stack + result.program.size();
 			result.program.push_back("pushbn " + (*adress_var5).first);
 			result.program.insert(result.program.end(), p2.begin(), p2.end());
 			result.program.push_back("+");
@@ -1584,7 +1600,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 	case 23: // {"<byE>", {"eps"}}
 		del_rule(attribute_stack, number_rule);
 
-		result.program.push_back("push 1"); // РўР°Рє РєР°Рє С€Р°Рі РЅРµ РѕРїСЂРµРґРµР»РµРЅ, С‚Рѕ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РѕРЅ СЂР°РІРµРЅ 1
+		result.program.push_back("push 1"); // Так как шаг не определен, то по умолчанию он равен 1
 		result.type = 0;
 		break;
 
@@ -1593,6 +1609,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // fi
+		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
 		attribute_stack.pop(); // <Program>
 		attribute_stack.pop(); // T
@@ -1610,13 +1627,13 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
-		number_line = Count_rows_until_nonterminals(attribute_stack);
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
-		new_label1 = number_line + result.program.size() + 1 + p2.size() + 1;
+		new_label1 = number_line_in_stack + result.program.size() + 1 + p2.size() + 1;
 		result.program.push_back("ji " + to_string(new_label1));
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		new_label2 = number_line + result.program.size() + 1 + p1.size();
+		new_label2 = number_line_in_stack + result.program.size() + 1 + p1.size();
 		result.program.push_back("jmp " + to_string(new_label2));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		
@@ -1640,12 +1657,12 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
-		number_line = Count_rows_until_nonterminals(attribute_stack);
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		new_label1 = number_line + result.program.size() + 2;
+		new_label1 = number_line_in_stack + result.program.size() + 2;
 		result.program.push_back("ji " + to_string(new_label1));
-		new_label2 = number_line + result.program.size() + 1 + p1.size();
+		new_label2 = number_line_in_stack + result.program.size() + 1 + p1.size();
 		result.program.push_back("jmp " + to_string(new_label2));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 
@@ -1653,6 +1670,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 26: // {"<input>", {"input", "V", ";"}}
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		adress_var1 = attribute_stack.top().adress_var;
@@ -1660,8 +1678,8 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // input
 
-		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) != declared_variables.end())
-			throw (string("The variable declaration is missing"));
+		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) == declared_variables.end())
+			throw (string("The variable declaration is missing. Line " + to_string(number_line_in_code)));
 
 		result.program.push_back("read");
 		result.program.push_back("pop " + (*adress_var1).first);
@@ -1685,19 +1703,50 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 28: // {"<label>", {"L"}}
 		attribute_stack.pop(); // T
-		name_label = *(attribute_stack.top().adress_label);
-		attribute_stack.pop(); // gotoL
+		adress_label = attribute_stack.top().adress_label;
+		number_line_in_code = attribute_stack.top().number_line;
+		attribute_stack.pop(); // L
 
-		number_line = Count_rows_until_nonterminals(attribute_stack);
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
-		if (find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label)) != number_lines_labels.end())
+		for (auto i : number_lines_labels)
 		{
-			// Р•СЃР»Рё СЃРЅР°С‡Р°Р»Р° Р±С‹Р»Р° goto, Р° С‚РѕР»СЊРєРѕ СЃРµР№С‡Р°СЃ РІСЃС‚СЂРµС‚РёР»Р°СЃС‚СЊ label
-			find( number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label) )->number_line = number_line;
+			if (i == adress_label)
+				throw (string("Reappearance of the label in the program. Line " + to_string(number_line_in_code)));
 		}
-		else
+
+		// Если сначала была goto, а только сейчас встретиласть label
+		number_lines_labels.push_back(LabelInfo(adress_label, number_line_in_stack));
+
+		while (!attribute_stack.empty())
 		{
-			number_lines_labels.push_back(LabelInfo(name_label, result.program.size()));
+			attribute_stack_copy.push(attribute_stack.top());
+			attribute_stack.pop(); // T
+			if (!attribute_stack.empty())
+			{
+				for (auto& i : attribute_stack.top().program)
+				{
+					string temp = i.substr(0, 6);
+					string temp2 = "gotoL ";
+					if (i.size() >= 7 && temp == temp2)
+					{
+						temp = (*number_lines_labels[number_lines_labels.size() - 1].label);
+						temp2 = i.substr(6, i.size() - 6);
+						if (temp == temp2)
+						{
+							i = "jmp " + to_string(number_lines_labels[number_lines_labels.size() - 1].number_line);
+						}
+					}
+				}
+				attribute_stack_copy.push(attribute_stack.top());
+				attribute_stack.pop(); // что-то
+			}
+		}
+
+		while (!attribute_stack_copy.empty())
+		{
+			attribute_stack.push(attribute_stack_copy.top());
+			attribute_stack_copy.pop();
 		}
 
 		break;
@@ -1706,23 +1755,31 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
-		name_label = *(attribute_stack.top().adress_label);
+		adress_label = attribute_stack.top().adress_label;
 		attribute_stack.pop(); // gotoL
 
-		if (find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label)) != number_lines_labels.end())
+		flag = false;
+
+		for (auto i : number_lines_labels)
 		{
-			// Р•СЃР»Рё СЃРЅР°С‡Р°Р»Р° Р±С‹Р»Р° РјРµС‚РєР°
-			result.program.push_back("jmp " + to_string(find(number_lines_labels.begin(), number_lines_labels.end(), LabelInfo(name_label))->number_line));
+			if (i.label == adress_label)
+			{
+				result.program.push_back("jmp " + to_string(i.number_line));
+				flag = true;
+				break;
+			}
 		}
-		else
+
+		if (flag == false)
 		{
-			number_lines_labels.push_back(LabelInfo(name_label));
+			result.program.push_back("gotoL " + (*adress_label));
 		}
 
 		break;
 
 	case 30: // {"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}}
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // ;
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // ni
@@ -1742,21 +1799,23 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // select
 
+		temp_counter = 0;
+
 		if (type2 == 1)
-			throw(string("Type mismatch in case"));
+			throw(string("Type mismatch in case. Line " + to_string(number_line_in_code)));
 		for (auto& i : list_adress_constants)
 		{
 			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.push_back("push " + get<0>((*i)));
-			result.program.push_back("=");
-			result.program.push_back("ji " + labels[temp_counter]);
+			result.program.push_back("push " + to_string(get<0>(*i)));
+			result.program.push_back("==");
+			result.program.push_back("ji " + to_string(labels[temp_counter]));
 			temp_counter++;
 
 		}
 		if (flag_otherwise == 0)
-			result.program.push_back("jmp " + end_label);
+			result.program.push_back("jmp " + to_string(end_label));
 		else
-			result.program.push_back("jmp " + labels[labels.size() - 1]);
+			result.program.push_back("jmp " + to_string(labels[labels.size() - 1]));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 
 		break;
@@ -1773,6 +1832,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p2 = attribute_stack.top().program;
 		attribute_stack.pop(); // <Program>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // :
 		attribute_stack.pop(); // T
 		adress_int_const3 = attribute_stack.top().adress_const;
@@ -1782,18 +1842,20 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // case
 
 		if (type3 == 1)
-			throw(string("Type mismatch in case"));
+			throw(string("Type mismatch in case. Line " + to_string(number_line_in_code)));
 
-		//РџСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РµРµ РІ СЃРїРёСЃРєРµ РѕРґРёРЅР°РєРѕРІС‹С… РєРѕРЅСЃС‚Р°РЅС‚
+		//Проверка на наличее в списке одинаковых констант
 		//if (find(list_adress_constants.begin(), list_adress_constants.end(), adress_const3) != list_adress_constants.end())
 		//	throw("Uncertainty in the case");
 
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
 		result.labels = labels;
-		result.labels.push_back(result.program.size());
+		result.labels.push_back(number_line_in_stack);
+		result.list_adress_constants = list_adress_constants;
 		result.list_adress_constants.push_back(adress_int_const3);
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		result.program.push_back("jmp " + end_label);
+		result.program.push_back("jmp " + to_string(end_label));
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.end_label = end_label;
 
@@ -1804,21 +1866,24 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		p1 = attribute_stack.top().program;
 		attribute_stack.pop(); // <Program>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // :
 		attribute_stack.pop(); // T
-		adress_const2 = *attribute_stack.top().adress_const;
+		adress_int_const2 = attribute_stack.top().adress_const;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // C
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // case
 
 		if (type2 == 1)
-			throw(string("Type mismatch in case"));
+			throw(string("Type mismatch in case. Line " + to_string(number_line_in_code)));
 
-		result.labels.push_back(result.program.size());
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+
+		result.labels.push_back(number_line_in_stack);
 		result.list_adress_constants.push_back(adress_int_const2);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.end_label = result.program.size();
+		result.end_label = number_line_in_stack + result.program.size();
 		break;
 
 	case 33: // {"<case>", {"otherwise", ":", "<Program>"}}
@@ -1830,10 +1895,12 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // otherwise
 
+		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+
 		result.flag_otherwise = true;
-		result.labels.push_back(result.program.size());
+		result.labels.push_back(number_line_in_stack);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.end_label = result.program.size();
+		result.end_label = number_line_in_stack + result.program.size();
 		break;
 
 	case 34: // {"<exception>", {"raise", ";"}}
@@ -1856,6 +1923,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // +
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
@@ -1863,7 +1931,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // <E>
 
 		if (type1 != type2)
-			throw(string("Type mismatch in addition"));
+			throw(string("Type mismatch in addition. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -1878,6 +1946,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // -
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
@@ -1885,7 +1954,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // <E>
 
 		if (type1 != type2)
-			throw(string("Type mismatch in subtraction"));
+			throw(string("Type mismatch in subtraction. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -1923,6 +1992,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <F>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // *
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
@@ -1930,7 +2000,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // <T>
 
 		if (type1 != type2)
-			throw(string("Type mismatch in multiplication"));
+			throw(string("Type mismatch in multiplication. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -1945,6 +2015,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <F>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // /
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
@@ -1952,7 +2023,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // <T>
 
 		if (type1 != type2)
-			throw(string("Type mismatch in division"));
+			throw(string("Type mismatch in division. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -1967,13 +2038,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <F>
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // %
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <T>
 		if (type1 != type2)
-			throw(string("Type mismatch in modulus"));
+			throw(string("Type mismatch in modulus. Line " + to_string(number_line_in_code)));
 		
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -1995,10 +2067,11 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 	case 44: // {"<F>", {"V"}}
 		attribute_stack.pop(); // T
 		adress_var1 = attribute_stack.top().adress_var;
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // V
 
 		if (find(declared_variables.begin(), declared_variables.end(), adress_var1) == declared_variables.end())
-			throw (string("The variable declaration is missing"));
+			throw (string("The variable declaration is missing. Line " + to_string(number_line_in_code)));
 
 		if ((*adress_var1).second.index() == 0)
 			result.program.push_back("push " + (*adress_var1).first);
@@ -2018,7 +2091,12 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		if (type1 == 0)
 			result.program.push_back("push " + to_string(get<0>(adress_const1)));
 		else if (type1 == 1)
-			result.program.push_back("pushbn " + to_string(get<1>(adress_const1)));
+		{
+			string bn;
+			for (int i = get<1>(adress_const1).Get_Size() - 1; i >= 0; i--)
+				bn += to_string(get<1>(adress_const1)[i]);
+			result.program.push_back("pushbn " + bn);
+		}
 
 		result.type = type1;
 
@@ -2026,6 +2104,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 	case 46: // { "<F>", { "get", "(", "<E>", ",", "<E>", ")" } }
 		attribute_stack.pop(); // T
+		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // )
 		attribute_stack.pop(); // T
 		type2 = attribute_stack.top().type;
@@ -2042,7 +2121,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // get
 
 		if (!(type1 == 1 && type2 == 0))
-			throw(string("Type mismatch in get function"));
+			throw(string("Type mismatch in get function. Line" + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
@@ -2057,15 +2136,16 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		type1 = attribute_stack.top().type;
 		attribute_stack.pop(); // <E>
 		attribute_stack.pop(); // T
-		attribute_stack.pop(); // rel
+		number_line_in_code = attribute_stack.top().number_line;
 		relation = attribute_stack.top().relation;
+		attribute_stack.pop(); // rel
 		attribute_stack.pop(); // T
 		p2 = attribute_stack.top().program;
 		type2 = attribute_stack.top().type;
 		attribute_stack.pop(); // <E>
 
-		if (type1 == type2)
-			throw(string("Type mismatch in relational operation"));
+		if (type1 != type2)
+			throw(string("Type mismatch in relational operation. Line " + to_string(number_line_in_code)));
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
@@ -2124,7 +2204,7 @@ stack<Sintax::attribute_word> Sintax::del_n_elements(stack<attribute_word>& attr
 
 int Sintax::Count_rows_until_nonterminals(stack<attribute_word> attribute_stack)
 {
-	int result = 1; // Рў.Рє. РЅР°С‡Р°Р»Рѕ СЃ 1
+	int result = 1; // Т.к. начало с 1
 	while (!attribute_stack.empty())
 	{
 		attribute_stack.pop(); // T

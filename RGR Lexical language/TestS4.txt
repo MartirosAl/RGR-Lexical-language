@@ -1,0 +1,38 @@
+declare a as int , b as BigNumber ;
+;;
+;
+;;
+a = 1 ;
+;;
+b = 11111111111111111 ;
+;;
+while a > a do ; od ;
+;;
+for a from a to a do ; od ;
+;;
+for a from a to a by a do ; od ;
+;;
+if ( a < a ) ; fi ;
+;;
+if ( a == a ) ; else ; fi ;
+;;
+input a ;
+;;
+input b ;
+;;
+print a ;
+;;
+<<A>>
+goto A ;
+;;
+goto B ;
+<<B>>
+;;
+select a in case 0: ; case 1: ; ni;
+;;
+select a in case 0: ; case 1: ; otherwise: ; ni;
+;;
+raise ;
+;;
+<<<Comment>>>
+;;

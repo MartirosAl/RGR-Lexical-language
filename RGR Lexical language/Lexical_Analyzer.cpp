@@ -36,7 +36,7 @@ void TableToken::Add_Constant(vector<short> a)
 
 void TableToken::Add_Label(string a)
 {
-    if (!count(table_labels.begin(), table_labels.end(), a))
+    if (find(table_labels.begin(), table_labels.end(), a) == table_labels.end())
     {
         table_labels.push_back(a);
     }
@@ -331,7 +331,7 @@ vector<TableToken::Token> TableToken::Lexical_Analyzer(const string filename)
                 register_type_token = TokenType::C_COMMENT;
                 prev_character = Transliterator(in.peek()).token_class;
                 accumulation_of_value.clear();
-                Create_Token(accumulation_of_value);
+                table_tokens[table_tokens.size() - 1].token_class = COMMENT;
             }
 
             continue;
