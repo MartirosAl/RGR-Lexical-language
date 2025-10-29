@@ -1,13 +1,59 @@
-push a
 push 1
-==
-ji 12
-push a
+pop n
+push n
+pop result
+push 2
+pop i
+push i
+push i
+push i
+*
+push 1
++
+>
+ji 47
+jmp 21
+push i
+push 1
++
+pop i
+jmp 7
+push n
+push i
+%
 push 0
 ==
-ji 9
-jmp -1
-label tl2
-end
-jmp -1
-label tl0
+ji 28
+jmp 46
+push n
+push i
+%
+push 0
+==
+ji 58
+jmp 40
+push n
+push i
+/
+pop n
+jmp 28
+push result
+push result
+push i
+/
+-
+pop result
+jmp 16
+push n
+push 1
+>
+ji 52
+jmp 58
+push result
+push result
+push n
+/
+-
+pop result
+push result
+write

@@ -138,6 +138,7 @@
   <ItemGroup>
     <ClInclude Include="BigNumber.h" />
     <ClInclude Include="Iterator.h" />
+    <ClInclude Include="LexicalAnalyzer.h" />
     <ClInclude Include="Lexical_Analyzer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +154,7 @@
     <Text Include="TestS4.txt" />
     <Text Include="TestS5.txt" />
     <Text Include="TestS6.txt" />
+    <Text Include="TestSeul.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestL4.txt" />

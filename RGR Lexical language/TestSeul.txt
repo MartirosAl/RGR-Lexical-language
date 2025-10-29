@@ -1,0 +1,16 @@
+declare i as int , n as int, result as int;
+n = 1;
+result = n;
+
+for i from 2 to i*i + 1 
+do
+   if ( n%i == 0 ) 
+      while n%i == 0 
+      do 
+        n = n/i ; 
+      od;
+      result = result - result/i ; 
+   fi;
+od;
+if (n > 1) result = result - result/n ; fi;
+print result;

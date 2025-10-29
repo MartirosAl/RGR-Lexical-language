@@ -1033,16 +1033,6 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 				action_cell = TabAn.rows[T].f[Terminal_number("eps")];
 			}
 
-			//TEST//
-			if (token_index < table_tokens.size())
-				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			else
-				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			Print_Attribute_Stack(action_stack);
-			cout << endl;
-			TEST_COUNTER++;
-			//TEST//
-
 			if (action_cell == "t")
 			{
 				token_index++;
@@ -1088,7 +1078,6 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	att_word.program = Creating_transitions_by_label(att_word.program);
 
 	Write_Stack_Program(att_word.program, file);
-	Print_Stack_Program(att_word.program);
 
 	return true;
 
@@ -1548,9 +1537,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		
 		if ((*adress_var5).second.index() == 0)
-			temp_string = "push";
+			temp_string = "push ";
 		else
-			temp_string = "pushbn";
+			temp_string = "pushbn ";
 		
 		result.program.insert(result.program.end(), p4.begin(), p4.end());
 		result.program.push_back("pop " + (*adress_var5).first);
@@ -2177,17 +2166,23 @@ string Sintax::NewLabel()
 vector<string> Sintax::Creating_transitions_by_label(vector<string> stack_program)
 {
 
-
+	int TEST;
 	for (int i = 0; i < stack_program.size(); i++)
 	{
+		TEST = stack_program[i].find("label ");
 		if (stack_program[i].find("label ") == 0)
 		{
 			for (auto& j : List_tempered_labels)
 			{
+				TEST = stack_program[i].find(j.first);
 				if (stack_program[i].find(j.first) == 6)
-					j.second = i;
+				{
+					j.second = i + 1; // тк по стеку мы идем с 0, а строки считаются с 1
+					break;
+				}
 			}
-			stack_program.pop_back();
+			stack_program.erase(stack_program.begin() + i);
+			i--; // тк мы удалили элемент со сдвигом, то на месте stack_program[i] появился новый элемент, который тоже нужно проверить, а в следующей итерации for делается i++ и чтобы компенсировать делаем i--
 		}
 	}
 
@@ -2198,10 +2193,12 @@ vector<string> Sintax::Creating_transitions_by_label(vector<string> stack_progra
 			if (stack_program[i].find("ji ") == 0 && stack_program[i].find(j.first) == 3)
 			{
 				stack_program[i] = "ji " + to_string(j.second);
+				break;
 			}
 			if (stack_program[i].find("jmp ") == 0 && stack_program[i].find(j.first) == 4)
 			{
 				stack_program[i] = "jmp " + to_string(j.second);
+				break;
 			}
 		}
 

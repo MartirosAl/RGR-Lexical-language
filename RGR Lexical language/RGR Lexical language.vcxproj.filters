@@ -41,6 +41,9 @@
     <ClInclude Include="BigNumber.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="LexicalAnalyzer.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="TestL1.txt">
@@ -77,6 +80,9 @@
       <Filter>Файлы ресурсов</Filter>
     </Text>
     <Text Include="TestS6.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestSeul.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
   </ItemGroup>
