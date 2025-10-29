@@ -6,14 +6,9 @@ using namespace std;
 
 int main()
 {
-   //TableToken result;
-   //result.Lexical_Analyzer("Test4.txt");
-   //
-   //result.Print_Table_Token();
-
    Sintax A;
    
-   bool res = A.Translation_of_code("Test14.txt", "OUT.txt");
+   bool res = A.Translation_of_code("TestSeul.txt", "OUT.txt");
 
    if (res == 1)
    {

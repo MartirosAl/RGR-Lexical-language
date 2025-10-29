@@ -1,125 +1,46 @@
-
-
-
-
-
+push 7
+pop n
+push 0
+pop result
 push 1
+pop i
+push i
+push n
+>
+ji 45
+jmp 17
+push i
+push 1
++
+pop i
+jmp 7
+push i
 pop a
-
-
-pushbn 11111111111111111
+push n
 pop b
-
-
-push a
-push a
->
-ji 102
-jmp 118
-
-jmp 14
-
-
-push a
-pop a
-push a
-push a
->
-ji 37
+push b
+push 0
+!=
+ji 26
 jmp 35
 push a
-push 1
-+
+push b
+%
+pop temp
+push b
 pop a
-jmp 25
-
-jmp 30
-
-
-push a
-pop a
-push a
-push a
->
-ji 53
-jmp 51
-push a
-push a
-+
-pop a
-jmp 41
-
-jmp 102
-
-
-push a
-push a
-<
-ji 102
-jmp 102
-
-
-
-push a
-push a
-==
-ji 102
-
-jmp 102
-
-
-
-read
-pop a
-
-
-read
+push temp
 pop b
-
-
+jmp 21
 push a
+push 1
+==
+ji 40
+jmp 44
+push result
+push 1
++
+pop result
+jmp 12
+push result
 write
-
-
-jmp 84
-
-
-jmp 88
-
-
-push a
-push 1
-==
-ji 102
-push a
-push 0
-==
-ji 102
-jmp 102
-
-jmp 102
-
-
-
-push a
-push 1
-==
-ji 118
-push a
-push 0
-==
-ji 118
-jmp 118
-
-jmp 118
-
-jmp 118
-
-
-
-end
-
-
-
-
-

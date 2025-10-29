@@ -1017,7 +1017,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	att_word = Token_processing(table_tokens[0]);
 	int token_index = 0;
 
-	int TEST_COUNTER = 0;
+	//int TEST_COUNTER = 0;
 
 
 	try
@@ -1025,15 +1025,15 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 		while (action_stack.size() >= 1)
 		{
 
-			//TEST//
-			if (token_index < table_tokens.size())
-				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			else
-				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			Print_Attribute_Stack(action_stack);
-			cout << endl;
-			TEST_COUNTER++;
-			//TEST//
+			////TEST//
+			//if (token_index < table_tokens.size())
+			//	cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			//else
+			//	cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			//Print_Attribute_Stack(action_stack);
+			//cout << endl;
+			//TEST_COUNTER++;
+			////TEST//
 
 			if (token_index < table_tokens.size())
 			{

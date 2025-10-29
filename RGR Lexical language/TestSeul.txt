@@ -1,16 +1,18 @@
-declare i as int , n as int, result as int;
-n = 1;
-result = n;
+declare i as int, n as int, result as int, temp as int, a as int, b as int;
+n = 7;
+result = 0;
 
-for i from 2 to i*i + 1 
+for i from 1 to n
 do
-   if ( n%i == 0 ) 
-      while n%i == 0 
-      do 
-        n = n/i ; 
-      od;
-      result = result - result/i ; 
-   fi;
+   a = i ;
+   b = n ;
+   while b != 0
+   do
+      temp = a%b;
+      a = b;
+      b = temp;
+   od;
+   if ( a == 1 ) result = result + 1; fi;
 od;
-if (n > 1) result = result - result/n ; fi;
 print result;
+      
