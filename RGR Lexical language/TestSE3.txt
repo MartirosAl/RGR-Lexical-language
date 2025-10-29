@@ -1,1 +1,1 @@
-goto I ;
+goto I;

@@ -1,5 +1,5 @@
 declare i as int, n as int, result as int, temp as int, a as int, b as int;
-n = 7;
+n = 6;
 result = 0;
 
 for i from 1 to n
@@ -15,4 +15,3 @@ do
    if ( a == 1 ) result = result + 1; fi;
 od;
 print result;
-      

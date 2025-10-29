@@ -8,7 +8,7 @@ int main()
 {
    Sintax A;
    
-   bool res = A.Translation_of_code("TestSeul.txt", "OUT.txt");
+   bool res = A.Translation_of_code("TestSE3.txt", "OUT.txt");
 
    if (res == 1)
    {

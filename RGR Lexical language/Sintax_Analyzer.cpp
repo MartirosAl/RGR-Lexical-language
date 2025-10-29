@@ -1017,7 +1017,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	att_word = Token_processing(table_tokens[0]);
 	int token_index = 0;
 
-	//int TEST_COUNTER = 0;
+	int TEST_COUNTER = 0;
 
 
 	try
@@ -1025,15 +1025,15 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 		while (action_stack.size() >= 1)
 		{
 
-			////TEST//
-			//if (token_index < table_tokens.size())
-			//	cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			//else
-			//	cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			//Print_Attribute_Stack(action_stack);
-			//cout << endl;
-			//TEST_COUNTER++;
-			////TEST//
+			//TEST//
+			if (token_index < table_tokens.size())
+				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			else
+				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			Print_Attribute_Stack(action_stack);
+			cout << endl;
+			TEST_COUNTER++;
+			//TEST//
 
 			if (token_index < table_tokens.size())
 			{
@@ -1080,14 +1080,14 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 				att_word.word = "eps";
 			}
 		}
+
+		att_word.program = Creating_transitions_by_label(att_word.program);
 	}
 	catch (string err)
 	{
 		cerr << "Error during syntactic analysis: " << err << endl;
 		return false;
 	}
-
-	att_word.program = Creating_transitions_by_label(att_word.program);
 
 	Write_Stack_Program(att_word.program, file);
 
@@ -2199,21 +2199,47 @@ vector<string> Sintax::Creating_transitions_by_label(vector<string> stack_progra
 			i--; // тк мы удалили элемент со сдвигом, то на месте stack_program[i] появился новый элемент, который тоже нужно проверить, а в следующей итерации for делается i++ и чтобы компенсировать делаем i--
 		}
 	}
-
+	
+	bool flag1 = false;
+	bool flag2 = false;
+	int sw = -1;
 	for (int i = 0; i < stack_program.size(); i++)
 	{
-		for (auto& j : List_tempered_labels)
+		flag1 = false;
+		flag2 = false;
+		sw = -1;
+
+		if (stack_program[i].find("ji ") == 0)
 		{
-			if (stack_program[i].find("ji ") == 0 && stack_program[i].find(j.first) == 3)
+			flag2 = true;
+			sw = 1;
+		}
+		if (stack_program[i].find("jmp ") == 0)
+		{
+			flag2 = true;
+			sw = 2;
+		}
+		if (flag2 == true)
+			for (auto& j : List_tempered_labels)
 			{
-				stack_program[i] = "ji " + to_string(j.second);
-				break;
+				if (sw == 1 && stack_program[i].find(j.first) == 3)
+				{
+					stack_program[i] = "ji " + to_string(j.second);
+					flag1 = true;
+					break;
+				}
+
+				if (sw == 2 && stack_program[i].find(j.first) == 4)
+				{
+					stack_program[i] = "jmp " + to_string(j.second);
+					flag1 = true;
+					break;
+				}
 			}
-			if (stack_program[i].find("jmp ") == 0 && stack_program[i].find(j.first) == 4)
-			{
-				stack_program[i] = "jmp " + to_string(j.second);
-				break;
-			}
+
+		if (flag1 == false && flag2 == true)
+		{
+			throw (string("No suitable labels. Line " + to_string(i + 1)));
 		}
 
 	}
