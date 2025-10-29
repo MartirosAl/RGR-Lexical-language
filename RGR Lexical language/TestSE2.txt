@@ -1,0 +1,2 @@
+declare a as int, b as BigNumber;
+a = b ;

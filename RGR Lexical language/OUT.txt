@@ -1,59 +1,125 @@
+
+
+
+
+
 push 1
-pop n
-push n
-pop result
-push 2
-pop i
-push i
-push i
-push i
-*
+pop a
+
+
+pushbn 11111111111111111
+pop b
+
+
+push a
+push a
+>
+ji 102
+jmp 118
+
+jmp 14
+
+
+push a
+pop a
+push a
+push a
+>
+ji 37
+jmp 35
+push a
 push 1
 +
+pop a
+jmp 25
+
+jmp 30
+
+
+push a
+pop a
+push a
+push a
 >
-ji 47
-jmp 21
-push i
-push 1
+ji 53
+jmp 51
+push a
+push a
 +
-pop i
-jmp 7
-push n
-push i
-%
-push 0
+pop a
+jmp 41
+
+jmp 102
+
+
+push a
+push a
+<
+ji 102
+jmp 102
+
+
+
+push a
+push a
 ==
-ji 28
-jmp 46
-push n
-push i
-%
-push 0
-==
-ji 58
-jmp 40
-push n
-push i
-/
-pop n
-jmp 28
-push result
-push result
-push i
-/
--
-pop result
-jmp 16
-push n
-push 1
->
-ji 52
-jmp 58
-push result
-push result
-push n
-/
--
-pop result
-push result
+ji 102
+
+jmp 102
+
+
+
+read
+pop a
+
+
+read
+pop b
+
+
+push a
 write
+
+
+jmp 84
+
+
+jmp 88
+
+
+push a
+push 1
+==
+ji 102
+push a
+push 0
+==
+ji 102
+jmp 102
+
+jmp 102
+
+
+
+push a
+push 1
+==
+ji 118
+push a
+push 0
+==
+ji 118
+jmp 118
+
+jmp 118
+
+jmp 118
+
+
+
+end
+
+
+
+
+

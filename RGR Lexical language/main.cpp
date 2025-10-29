@@ -13,12 +13,15 @@ int main()
 
    Sintax A;
    
-   bool res = A.Translation_of_code("TestSeul.txt", "OUT.txt");
+   bool res = A.Translation_of_code("Test14.txt", "OUT.txt");
 
-   TableTokenStack tokens;
-   tokens.Lexical_Analyzer("OUT.txt");
-   stack<variant<int, BigNumber>> stack;
-   tokens.Interpreter(stack);
+   if (res == 1)
+   {
+	   TableTokenStack tokens;
+	   tokens.Lexical_Analyzer("OUT.txt");
+	   stack<variant<int, BigNumber>> stack;
+	   tokens.Interpreter(stack);
+   }
 
    return 0;
 }

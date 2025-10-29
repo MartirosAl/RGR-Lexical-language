@@ -37,7 +37,6 @@ void TableToken::Add_Constant(vector<short> a)
 void TableToken::Add_Label(string a)
 {
     if (find(table_labels.begin(), table_labels.end(), a) == table_labels.end())
-    if (find(table_labels.begin(), table_labels.end(), a) == table_labels.end())
     {
         table_labels.push_back(a);
     }

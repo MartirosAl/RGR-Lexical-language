@@ -85,6 +85,15 @@
     <Text Include="TestSeul.txt">
       <Filter>Файлы ресурсов</Filter>
     </Text>
+    <Text Include="TestSE1.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestSE2.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
+    <Text Include="TestSE3.txt">
+      <Filter>Файлы ресурсов</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="TestL4.txt">

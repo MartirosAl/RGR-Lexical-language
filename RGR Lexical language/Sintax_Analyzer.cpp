@@ -1019,10 +1019,22 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 
 	int TEST_COUNTER = 0;
 
+
 	try
 	{
 		while (action_stack.size() >= 1)
 		{
+
+			//TEST//
+			if (token_index < table_tokens.size())
+				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			else
+				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			Print_Attribute_Stack(action_stack);
+			cout << endl;
+			TEST_COUNTER++;
+			//TEST//
+
 			if (token_index < table_tokens.size())
 			{
 				term_num = Terminal_number(Token_processing(table_tokens[token_index]).word);
@@ -1836,7 +1848,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		new_label2 = NewLabel();
 
 		result.flag_otherwise = true;
-		result.labels.push_back("label " + new_label1);
+		result.labels.push_back(new_label1);
+		result.end_label = new_label2;
+		result.program.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.program.push_back("label " + new_label2);
 		break;

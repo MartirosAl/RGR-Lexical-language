@@ -154,6 +154,9 @@
     <Text Include="TestS4.txt" />
     <Text Include="TestS5.txt" />
     <Text Include="TestS6.txt" />
+    <Text Include="TestSE1.txt" />
+    <Text Include="TestSE2.txt" />
+    <Text Include="TestSE3.txt" />
     <Text Include="TestSeul.txt" />
   </ItemGroup>
   <ItemGroup>
