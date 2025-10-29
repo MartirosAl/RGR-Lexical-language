@@ -183,9 +183,9 @@ protected:
 	{
 		string word;
 		vector<string> program;
-		vector<int> labels;
+		vector<string> labels;
 		vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
-		int end_label;
+		string end_label;
 		int type; // int = 0, bignumber = 1
 		string relation;
 		list<string>::iterator adress_label;
@@ -219,34 +219,8 @@ protected:
 		}
 	};
 
-	struct LabelInfo
-	{
-		list<string>::iterator label;
-		int number_line;
-
-		LabelInfo(list<string>::iterator label_)
-		{
-			label = label_;
-			number_line = -1;
-		}
-
-		LabelInfo(list<string>::iterator label_, int line)
-		{
-			label = label_;
-			number_line = line;
-		}
-
-		bool operator==(const LabelInfo& other) const
-		{
-			return label == other.label && number_line == other.number_line;
-		}
-
-	};
-
-	vector<LabelInfo> number_lines_labels;
 	vector<map<string, variant<int, BigNumber>>::iterator> declared_variables;
-
-	int Number_Stack_Lines = 0;
+	list<pair<string, int>> List_tempered_labels;
 
 
 public:
@@ -362,4 +336,8 @@ protected:
 	stack<attribute_word> del_n_elements(stack<attribute_word>& attribute_stack, int n);
 
 	int Count_rows_until_nonterminals(stack<attribute_word> attribute_stack);
+
+	string NewLabel();
+
+	vector<string> Creating_transitions_by_label(vector<string> stack_program);
 };

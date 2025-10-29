@@ -1085,6 +1085,8 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 		return false;
 	}
 
+	att_word.program = Creating_transitions_by_label(att_word.program);
+
 	Write_Stack_Program(att_word.program, file);
 	Print_Stack_Program(att_word.program);
 
@@ -1305,19 +1307,19 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 	variant<int, BigNumber> adress_const1, adress_const2, adress_const3, adress_const4, adress_const5;
 	set<variant<int, BigNumber>>::iterator adress_int_const1, adress_int_const2, adress_int_const3, adress_int_const4, adress_int_const5;
 	string relation;
-	int new_label1, new_label2, new_label3, new_label4;
+	string new_label1, new_label2, new_label3, new_label4;
 	list<string>::iterator adress_label;
-	int end_label;
+	string end_label;
 	bool flag_otherwise;
 	vector<set<variant<int, BigNumber>>::iterator> list_adress_constants;
-	vector<int> labels;
+	vector<string> labels;
 	int temp_counter = 0;
-	int number_line_in_stack;
+	//int number_line_in_stack;
 	int number_line_in_code;
 
 	bool flag;
 	stack<attribute_word> attribute_stack_copy;
-
+	string temp_string;
 
 	switch (number_rule)
 	{
@@ -1482,19 +1484,20 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		if (type2 != type3)
 			throw(string("Type mismatch in while. Line " + to_string(number_line_in_code)));
-		
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
 
-		new_label1 = number_line_in_stack;
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
+		new_label3 = NewLabel();
+		result.program.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
 		result.program.push_back(relation);
-		new_label2 = number_line_in_stack + result.program.size() + 2; // +2 тк после будет ji и jmp до самой метки
-		result.program.push_back("ji " + to_string(new_label2));
-		new_label3 = number_line_in_stack + result.program.size() + 1 + p1.size() + 1; // до метки еще <Program> и jmp 
-		result.program.push_back("jmp " + to_string(new_label3));
+		result.program.push_back("ji " + new_label2);
+		result.program.push_back("jmp " + new_label3);
+		result.program.push_back("label " + new_label2);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.program.push_back("jmp " + to_string(new_label1));
+		result.program.push_back("jmp " + new_label1);
+		result.program.push_back("label " + new_label3);
 
 		break;
 
@@ -1538,50 +1541,35 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		if (type2 != type3 || type2 != type4 || type2 != (*adress_var5).second.index())
 			throw(string("Type mismatch in for. Line " + to_string(number_line_in_code)));
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
+		new_label3 = NewLabel();
+		new_label4 = NewLabel();
 
+		
 		if ((*adress_var5).second.index() == 0)
-		{
-			result.program.insert(result.program.end(), p4.begin(), p4.end());
-			result.program.push_back("pop " + (*adress_var5).first);
-			new_label1 = number_line_in_stack + result.program.size();
-			result.program.push_back("push " + (*adress_var5).first);
-			result.program.insert(result.program.end(), p3.begin(), p3.end());
-			result.program.push_back(">");
-			new_label2 = number_line_in_stack + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
-			result.program.push_back("ji " + to_string(new_label2));
-			new_label3 = number_line_in_stack + result.program.size() + 2 + p2.size() + 3;
-			result.program.push_back("jmp " + to_string(new_label3));
-			new_label4 = number_line_in_stack + result.program.size();
-			result.program.push_back("push " + (*adress_var5).first);
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.push_back("+");
-			result.program.push_back("pop " + (*adress_var5).first);
-			result.program.push_back("jmp " + to_string(new_label1));
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("jmp " + to_string(new_label4));
-		}
+			temp_string = "push";
 		else
-		{
-			result.program.insert(result.program.end(), p4.begin(), p4.end());
-			result.program.push_back("pop " + (*adress_var5).first);
-			new_label1 = number_line_in_stack + result.program.size();
-			result.program.push_back("pushbn " + (*adress_var5).first);
-			result.program.insert(result.program.end(), p3.begin(), p3.end());
-			result.program.push_back(">");
-			new_label2 = number_line_in_stack + result.program.size() + 3 + p2.size() + 3 + p1.size() + 1; // просчитываем все
-			result.program.push_back("ji " + to_string(new_label2));
-			new_label3 = number_line_in_stack + result.program.size() + 2 + p2.size() + 3;
-			result.program.push_back("jmp " + to_string(new_label3));
-			new_label4 = number_line_in_stack + result.program.size();
-			result.program.push_back("pushbn " + (*adress_var5).first);
-			result.program.insert(result.program.end(), p2.begin(), p2.end());
-			result.program.push_back("+");
-			result.program.push_back("pop " + (*adress_var5).first);
-			result.program.push_back("jmp " + to_string(new_label1));
-			result.program.insert(result.program.end(), p1.begin(), p1.end());
-			result.program.push_back("jmp " + to_string(new_label4));
-		}
+			temp_string = "pushbn";
+		
+		result.program.insert(result.program.end(), p4.begin(), p4.end());
+		result.program.push_back("pop " + (*adress_var5).first);
+		result.program.push_back("label " + new_label1);
+		result.program.push_back(temp_string + (*adress_var5).first);
+		result.program.insert(result.program.end(), p3.begin(), p3.end());
+		result.program.push_back(">");
+		result.program.push_back("ji " + new_label2);
+		result.program.push_back("jmp " + new_label3);
+		result.program.push_back("label " + new_label4);
+		result.program.push_back(temp_string + (*adress_var5).first);
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.push_back("+");
+		result.program.push_back("pop " + (*adress_var5).first);
+		result.program.push_back("jmp " + new_label1);
+		result.program.push_back("label " + new_label3);
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("jmp " + new_label4);
+		result.program.push_back("label " + new_label2);
 
 		break;
 
@@ -1627,15 +1615,16 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
 
 		result.program.insert(result.program.end(), p3.begin(), p3.end());
-		new_label1 = number_line_in_stack + result.program.size() + 1 + p2.size() + 1;
-		result.program.push_back("ji " + to_string(new_label1));
+		result.program.push_back("ji " + new_label1);
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		new_label2 = number_line_in_stack + result.program.size() + 1 + p1.size();
-		result.program.push_back("jmp " + to_string(new_label2));
+		result.program.push_back("jmp " + new_label2);
+		result.program.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("label " + new_label2);
 		
 		break;
 
@@ -1657,14 +1646,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // if
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
 
 		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		new_label1 = number_line_in_stack + result.program.size() + 2;
-		result.program.push_back("ji " + to_string(new_label1));
-		new_label2 = number_line_in_stack + result.program.size() + 1 + p1.size();
-		result.program.push_back("jmp " + to_string(new_label2));
+		result.program.push_back("ji " + new_label1);
+		result.program.push_back("jmp " + new_label2);
+		result.program.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.program.push_back("label " + new_label2);
 
 		break;
 
@@ -1707,47 +1697,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		number_line_in_code = attribute_stack.top().number_line;
 		attribute_stack.pop(); // L
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
-
-		for (auto i : number_lines_labels)
+		for (auto i : List_tempered_labels)
 		{
-			if (i == adress_label)
+			if (i.first == *adress_label)
 				throw (string("Reappearance of the label in the program. Line " + to_string(number_line_in_code)));
 		}
 
 		// Если сначала была goto, а только сейчас встретиласть label
-		number_lines_labels.push_back(LabelInfo(adress_label, number_line_in_stack));
-
-		while (!attribute_stack.empty())
-		{
-			attribute_stack_copy.push(attribute_stack.top());
-			attribute_stack.pop(); // T
-			if (!attribute_stack.empty())
-			{
-				for (auto& i : attribute_stack.top().program)
-				{
-					string temp = i.substr(0, 6);
-					string temp2 = "gotoL ";
-					if (i.size() >= 7 && temp == temp2)
-					{
-						temp = (*number_lines_labels[number_lines_labels.size() - 1].label);
-						temp2 = i.substr(6, i.size() - 6);
-						if (temp == temp2)
-						{
-							i = "jmp " + to_string(number_lines_labels[number_lines_labels.size() - 1].number_line);
-						}
-					}
-				}
-				attribute_stack_copy.push(attribute_stack.top());
-				attribute_stack.pop(); // что-то
-			}
-		}
-
-		while (!attribute_stack_copy.empty())
-		{
-			attribute_stack.push(attribute_stack_copy.top());
-			attribute_stack_copy.pop();
-		}
+		result.program.push_back("label " + (*adress_label));
+		List_tempered_labels.push_back(pair<string, int>(*adress_label, -1));
 
 		break;
 
@@ -1758,23 +1716,9 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		adress_label = attribute_stack.top().adress_label;
 		attribute_stack.pop(); // gotoL
 
-		flag = false;
+		result.program.push_back("jmp " + (*adress_label));
 
-		for (auto i : number_lines_labels)
-		{
-			if (i.label == adress_label)
-			{
-				result.program.push_back("jmp " + to_string(i.number_line));
-				flag = true;
-				break;
-			}
-		}
-
-		if (flag == false)
-		{
-			result.program.push_back("gotoL " + (*adress_label));
-		}
-
+		
 		break;
 
 	case 30: // {"<select>", {"select", "<E>", "in", "<case>", "ni", ";"}}
@@ -1808,14 +1752,14 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 			result.program.insert(result.program.end(), p2.begin(), p2.end());
 			result.program.push_back("push " + to_string(get<0>(*i)));
 			result.program.push_back("==");
-			result.program.push_back("ji " + to_string(labels[temp_counter]));
+			result.program.push_back("ji " + labels[temp_counter]);
 			temp_counter++;
 
 		}
 		if (flag_otherwise == 0)
-			result.program.push_back("jmp " + to_string(end_label));
+			result.program.push_back("jmp " + end_label);
 		else
-			result.program.push_back("jmp " + to_string(labels[labels.size() - 1]));
+			result.program.push_back("jmp " + labels[labels.size() - 1]);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
 
 		break;
@@ -1848,16 +1792,17 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		//if (find(list_adress_constants.begin(), list_adress_constants.end(), adress_const3) != list_adress_constants.end())
 		//	throw("Uncertainty in the case");
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
 
 		result.labels = labels;
-		result.labels.push_back(number_line_in_stack);
+		result.labels.push_back(new_label1);
 		result.list_adress_constants = list_adress_constants;
 		result.list_adress_constants.push_back(adress_int_const3);
-		result.program.insert(result.program.end(), p2.begin(), p2.end());
-		result.program.push_back("jmp " + to_string(end_label));
-		result.program.insert(result.program.end(), p1.begin(), p1.end());
 		result.end_label = end_label;
+		result.program.push_back("label " + new_label1);
+		result.program.insert(result.program.end(), p2.begin(), p2.end());
+		result.program.push_back("jmp " + end_label);
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
 
 		break;
 
@@ -1878,12 +1823,15 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		if (type2 == 1)
 			throw(string("Type mismatch in case. Line " + to_string(number_line_in_code)));
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
 
-		result.labels.push_back(number_line_in_stack);
+		result.labels.push_back(new_label1);
 		result.list_adress_constants.push_back(adress_int_const2);
+		result.end_label = new_label2;
+		result.program.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.end_label = number_line_in_stack + result.program.size();
+		result.program.push_back("label " + new_label2);
 		break;
 
 	case 33: // {"<case>", {"otherwise", ":", "<Program>"}}
@@ -1895,12 +1843,13 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		attribute_stack.pop(); // T
 		attribute_stack.pop(); // otherwise
 
-		number_line_in_stack = Count_rows_until_nonterminals(attribute_stack);
+		new_label1 = NewLabel();
+		new_label2 = NewLabel();
 
 		result.flag_otherwise = true;
-		result.labels.push_back(number_line_in_stack);
+		result.labels.push_back("label " + new_label1);
 		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.end_label = number_line_in_stack + result.program.size();
+		result.program.push_back("label " + new_label2);
 		break;
 
 	case 34: // {"<exception>", {"raise", ";"}}
@@ -2216,6 +2165,49 @@ int Sintax::Count_rows_until_nonterminals(stack<attribute_word> attribute_stack)
 	}
 
 	return result;
+}
+
+string Sintax::NewLabel()
+{
+	string name = "tl" + to_string(List_tempered_labels.size());
+	List_tempered_labels.push_back(pair<string, int>(name, -1));
+	return name;
+}
+
+vector<string> Sintax::Creating_transitions_by_label(vector<string> stack_program)
+{
+
+
+	for (int i = 0; i < stack_program.size(); i++)
+	{
+		if (stack_program[i].find("label ") == 0)
+		{
+			for (auto& j : List_tempered_labels)
+			{
+				if (stack_program[i].find(j.first) == 6)
+					j.second = i;
+			}
+			stack_program.pop_back();
+		}
+	}
+
+	for (int i = 0; i < stack_program.size(); i++)
+	{
+		for (auto& j : List_tempered_labels)
+		{
+			if (stack_program[i].find("ji ") == 0 && stack_program[i].find(j.first) == 3)
+			{
+				stack_program[i] = "ji " + to_string(j.second);
+			}
+			if (stack_program[i].find("jmp ") == 0 && stack_program[i].find(j.first) == 4)
+			{
+				stack_program[i] = "jmp " + to_string(j.second);
+			}
+		}
+
+	}
+
+	return stack_program;
 }
 
 bool Sintax::S_more_I(string a)

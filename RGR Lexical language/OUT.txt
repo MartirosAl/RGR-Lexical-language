@@ -1,0 +1,13 @@
+push a
+push 1
+==
+ji 12
+push a
+push 0
+==
+ji 9
+jmp -1
+label tl2
+end
+jmp -1
+label tl0
