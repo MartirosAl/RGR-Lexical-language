@@ -1,2 +1,14 @@
 declare b as BigNumber;
+declare c as BigNumber;
+declare e as BigNumber;
+declare i as int;
 b = 11111111111111112;
+c = 11111111111111112;
+e = b - c;
+print e;
+e = b + c;
+print e;
+e = b / c;
+print e;
+e = b * c;
+print e;

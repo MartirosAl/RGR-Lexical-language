@@ -1,5 +1,19 @@
 #include "BigNumber.h"
 
+BigNumber::BigNumber(int number_)
+{
+    number = new short[100];
+    capacity = 100;
+    size = 1;
+
+    int count = to_string(number_).size() - 1;
+    while (number_ != 0)
+    {
+        number[count] = number_ % 10;
+        number_ = number_ / 10;
+    }
+}
+
 BigNumber::BigNumber(const size_t new_capacity_)
 {
    if (new_capacity_ == 0)

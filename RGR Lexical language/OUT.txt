@@ -1,0 +1,60 @@
+push 1
+push 3
+push 5
+*
+push 7
+/
+push 1
+push n
+-
+push 6
++
+*
++
+pop n
+read
+pop n
+push 0
+pop result
+push 1
+pop i
+push i
+push n
+>
+ji 59
+jmp 31
+push i
+push 1
++
+pop i
+jmp 21
+push i
+pop a
+push n
+pop b
+push b
+push 0
+!=
+ji 40
+jmp 49
+push a
+push b
+%
+pop temp
+push b
+pop a
+push temp
+pop b
+jmp 35
+push a
+push 1
+==
+ji 54
+jmp 58
+push result
+push 1
++
+pop result
+jmp 26
+push result
+write

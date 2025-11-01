@@ -3,6 +3,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <string>
 #include "Iterator.h"
 
 using namespace std;
@@ -17,7 +18,9 @@ class BigNumber
 
 public:
 
-   BigNumber(const size_t new_cap_ = 100);
+   BigNumber(int number_);
+
+   BigNumber(size_t capasity_ = 100);
 
    BigNumber(const short* number_, const size_t size_);
 

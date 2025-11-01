@@ -1017,7 +1017,7 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 	att_word = Token_processing(table_tokens[0]);
 	int token_index = 0;
 
-	int TEST_COUNTER = 0;
+	//int TEST_COUNTER = 0;
 
 
 	try
@@ -1025,15 +1025,15 @@ bool Sintax::Translation_of_code(const string file_name, const string output_fil
 		while (action_stack.size() >= 1)
 		{
 
-			//TEST//
-			if (token_index < table_tokens.size())
-				cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			else
-				cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
-			Print_Attribute_Stack(action_stack);
-			cout << endl;
-			TEST_COUNTER++;
-			//TEST//
+			////TEST//
+			//if (token_index < table_tokens.size())
+			//	cout << "T" << action_stack.top().word << " | next: " << Token_processing(table_tokens[token_index]).word << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			//else
+			//	cout << "T" << action_stack.top().word << " | next: " << "eps" << " | action: " << action_cell << " | " << TEST_COUNTER << endl << "stack: ";
+			//Print_Attribute_Stack(action_stack);
+			//cout << endl;
+			//TEST_COUNTER++;
+			////TEST//
 
 			if (token_index < table_tokens.size())
 			{
@@ -1925,20 +1925,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		result.type = type1;
 		break;
 
-	case 39: // {"<E>", {"(", "<E>", ")"}}
-		attribute_stack.pop(); // T
-		attribute_stack.pop(); // )
-		attribute_stack.pop(); // T
-		p1 = attribute_stack.top().program;
-		type1 = attribute_stack.top().type;
-		attribute_stack.pop(); // <E>
-		attribute_stack.pop(); // T
-		attribute_stack.pop(); // (
-		result.program.insert(result.program.end(), p1.begin(), p1.end());
-		result.type = type1;
-		break;
-
-	case 40: // {"<T>", {"<T>", "*", "<F>"}}
+	case 39: // {"<T>", {"<T>", "*", "<F>"}}
 		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
 		type1 = attribute_stack.top().type;
@@ -1961,7 +1948,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		break;
 
-	case 41: // {"<T>", {"<T>", "/", "<F>"}}
+	case 40: // {"<T>", {"<T>", "/", "<F>"}}
 		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
 		type1 = attribute_stack.top().type;
@@ -1984,7 +1971,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		break;
 
-	case 42: // {"<T>", {"<T>", "%", "<F>"}}
+	case 41: // {"<T>", {"<T>", "%", "<F>"}}
 		attribute_stack.pop(); // T
 		p1 = attribute_stack.top().program;
 		type1 = attribute_stack.top().type;
@@ -2006,7 +1993,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		break;
 
-	case 43: // {"<T>", {"<F>"}}
+	case 42: // {"<T>", {"<F>"}}
 		attribute_stack.pop(); // T
 		type1 = attribute_stack.top().type;
 		p1 = attribute_stack.top().program;
@@ -2016,7 +2003,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 		result.type = type1;
 		break;
 
-	case 44: // {"<F>", {"V"}}
+	case 43: // {"<F>", {"V"}}
 		attribute_stack.pop(); // T
 		adress_var1 = attribute_stack.top().adress_var;
 		number_line_in_code = attribute_stack.top().number_line;
@@ -2034,7 +2021,7 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		break;
 
-	case 45: // {"<F>", {"C"}}
+	case 44: // {"<F>", {"C"}}
 		attribute_stack.pop(); // T
 		adress_const1 = *attribute_stack.top().adress_const;
 		type1 = attribute_stack.top().type;
@@ -2052,6 +2039,19 @@ Sintax::attribute_word Sintax::Grouping_by_rule(stack<attribute_word>& attribute
 
 		result.type = type1;
 
+		break;
+
+	case 45: // {"<F>", {"(", "<E>", ")"}}
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // )
+		attribute_stack.pop(); // T
+		p1 = attribute_stack.top().program;
+		type1 = attribute_stack.top().type;
+		attribute_stack.pop(); // <E>
+		attribute_stack.pop(); // T
+		attribute_stack.pop(); // (
+		result.program.insert(result.program.end(), p1.begin(), p1.end());
+		result.type = type1;
 		break;
 
 	case 46: // { "<F>", { "get", "(", "<E>", ",", "<E>", ")" } }
